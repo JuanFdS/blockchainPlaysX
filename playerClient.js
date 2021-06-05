@@ -1,13 +1,12 @@
-import {newRandomOwner, getRunInstance} from "./main.js";
+import {getRunInstanceClient} from "./main.js";
 import Run from "run-sdk";
 
 export class PlayerClient {
     constructor() {
-        this.owner = newRandomOwner();
     }
 
     async createPlayer(gameOwner) {
-        const runInstance = getRunInstance(this.owner);
+        const runInstance = getRunInstanceClient();
         const Player = await runInstance.load(gameOwner.classesLocations.player);
 
         const juan = new Player();
@@ -17,7 +16,7 @@ export class PlayerClient {
     }
 
     async askToJoinGame(gameOwner) {
-        const runInstance = getRunInstance(this.owner);
+        const runInstance = getRunInstanceClient();
 
         const game = await runInstance.load(gameOwner.gameLocation);
         const juan = await this.player.sync();
@@ -29,7 +28,7 @@ export class PlayerClient {
     }
 
     async movePlayer(direction) {
-        const runInstance = getRunInstance(this.owner);
+        const runInstance = getRunInstanceClient();
 
         await this.player.sync();
         this.player.move(direction);

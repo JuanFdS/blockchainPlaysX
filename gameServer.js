@@ -1,10 +1,10 @@
-import {getRunInstance, newRandomOwner} from "./main.js";
+import {getRunInstanceServer} from "./main.js";
 import Run from "run-sdk";
 
-async function deployGameClasses(runInstance) {
+export async function deployGameClasses(runInstance) {
     const RUNNING_STATUS = 'RUNNING';
     const END_STATUS = 'END';
-
+    
     const UP = 'UP';
     const DOWN = 'DOWN';
     const LEFT = 'LEFT';
@@ -32,6 +32,7 @@ async function deployGameClasses(runInstance) {
         }
     }
     Player.deps = {UP, DOWN, LEFT, RIGHT, expect: Run.extra.expect}
+    Player.metadata = { emoji: '⚔️' }
 
     class Game extends Jig {
         init() {
@@ -47,6 +48,17 @@ async function deployGameClasses(runInstance) {
         }
 
         join(player) {
+            expect(player).toBeInstanceOf(Player)
+            if (this.numberOfPlayers > this.players.length && this.status === RUNNING_STATUS) {
+                this.players.push(player);
+            }
+        }
+
+        crearInvitacion() {
+            
+        }
+
+        jugarCartita(player) {
             expect(player).toBeInstanceOf(Player)
             if (this.numberOfPlayers > this.players.length && this.status === RUNNING_STATUS) {
                 this.players.push(player);
@@ -73,16 +85,15 @@ async function deployGameClasses(runInstance) {
 
 export class GameServer {
     constructor() {
-        this.owner = newRandomOwner();
     }
 
     async deployClasses() {
-        const runInstance = getRunInstance(this.owner);
+        const runInstance = getRunInstanceServer();
         this.classesLocations = await deployGameClasses(runInstance);
     }
 
     async beginGame() {
-        const runInstance = getRunInstance(this.owner);
+        const runInstance = getRunInstanceServer();
 
         const Game = await runInstance.load(this.classesLocations.game);
         const pepitaGame = new Game();
@@ -92,14 +103,14 @@ export class GameServer {
     }
 
     async currentGame() {
-        const runInstance = getRunInstance(this.owner);
+        const runInstance = getRunInstanceServer();
 
         const currentGame = await runInstance.load(this.gameLocation);
         return await currentGame.sync();
     }
 
     async acceptPlayer(rawTx) {
-        const runInstance = getRunInstance(this.owner);
+        const runInstance = getRunInstanceServer();
         const playerWantsToJoinTx = await runInstance.import(rawTx);
 
         if (playerWantsToJoinTx.outputs.length) {

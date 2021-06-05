@@ -1,10 +1,11 @@
 import { GameServer } from "./gameServer.js";
 import { PlayerClient } from "./playerClient.js";
+import {getRunInstanceClient, getRunInstanceServer} from "./main.js";
 
 
 async function main() {
     const gameServer = new GameServer();
-    await gameServer.deployClasses();
+    // await gameServer.deployClasses();
 
     await gameServer.beginGame();
     const playerClient = new PlayerClient();
@@ -15,8 +16,8 @@ async function main() {
 
     return {
         server: gameServer,
-        client: playerClient
+        // client: playerClient
     };
 }
 
-export default { main };
+export default { main, getRunInstanceServer, getRunInstanceClient };
