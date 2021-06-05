@@ -11,5 +11,6 @@
   "license": "ISC",
   "dependencies": {
     "run-sdk": "^0.6.24"
-  }
+  },
+  "type": "module"
 }
