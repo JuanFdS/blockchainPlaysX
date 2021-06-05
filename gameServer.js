@@ -71,7 +71,7 @@ async function deployGameClasses(runInstance) {
     };
 }
 
-export class GameOwner {
+export class GameServer {
     constructor() {
         this.owner = newRandomOwner();
     }
@@ -89,6 +89,13 @@ export class GameOwner {
         pepitaGame.begin("pepita", 1);
         await pepitaGame.sync();
         this.gameLocation = pepitaGame.location;
+    }
+
+    async currentGame() {
+        const runInstance = getRunInstance(this.owner);
+
+        const currentGame = await runInstance.load(this.gameLocation);
+        return await currentGame.sync();
     }
 
     async acceptPlayer(rawTx) {

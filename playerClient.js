@@ -1,7 +1,7 @@
 import {newRandomOwner, getRunInstance} from "./main.js";
 import Run from "run-sdk";
 
-export class PlayerOwner {
+export class PlayerClient {
     constructor() {
         this.owner = newRandomOwner();
     }
@@ -26,5 +26,12 @@ export class PlayerOwner {
         joinTx.update(() => game.join(juan));
 
         return await joinTx.export();
+    }
+
+    async movePlayer(direction) {
+        const runInstance = getRunInstance(this.owner);
+
+        await this.player.sync();
+        this.player.move(direction);
     }
 }

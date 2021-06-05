@@ -1,5 +1,22 @@
-import { GameOwner } from "./gameOwner.js";
-import { PlayerOwner } from "./playerOwner.js";
+import { GameServer } from "./gameServer.js";
+import { PlayerClient } from "./playerClient.js";
 
-const ble = { GameOwner, PlayerOwner };
-export default ble;
+
+async function main() {
+    const gameServer = new GameServer();
+    await gameServer.deployClasses();
+
+    await gameServer.beginGame();
+    const playerClient = new PlayerClient();
+    await playerClient.createPlayer(gameServer);
+    const trx = await playerClient.askToJoinGame(gameServer);
+
+    await gameServer.acceptPlayer(trx);
+
+    return {
+        server: gameServer,
+        client: playerClient
+    };
+}
+
+export default { main };
