@@ -8,13 +8,18 @@ type alias Position =
 type alias Character =
     { position : Position
     , health : Int
-    , location : String
+    , location : Location
+    }
+
+
+type alias Profile =
+    { location : Location
     }
 
 
 type alias Game =
     { name : String
-    , location : String
+    , location : Location
     , characters : List Character
     }
 
@@ -25,8 +30,21 @@ type alias RunningGame =
     }
 
 
+type alias Location =
+    String
+
+
 
 --port sendMessage : String -> Cmd msg
+
+
+port asd : Location -> Cmd msg
+
+
+port searchProfile : Location -> Cmd msg
+
+
+port profileFound : (Profile -> msg) -> Sub msg
 
 
 port updatedGames : (List Game -> msg) -> Sub msg

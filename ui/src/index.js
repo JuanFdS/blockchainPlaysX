@@ -1,7 +1,7 @@
 import './main.css';
 import {Elm} from './Main.elm';
 import * as serviceWorker from './serviceWorker';
-import {decimeLosGames, loadTo3} from "./ui";
+import {decimeLosGames, getRun, loadTo3} from "./ui";
 
 const elm = Elm.Main.init({
   node: document.getElementById('root')
@@ -32,6 +32,11 @@ async function startBlockchain() {
   console.log(games);
   console.log(gamesAMandar);
 
+  elm.ports.searchProfile.subscribe(async (addressLocation) => {
+    let run = await getRun(addressLocation);
+    console.log({ location: run.owner.owner })
+    elm.ports.profileFound.send( { location: run.owner.owner });
+  });
   elm.ports.updatedGames.send(gamesAMandar);
 }
 

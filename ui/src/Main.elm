@@ -3,7 +3,7 @@ module Main exposing (..)
 import Browser
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (onClick)
+import Html.Events exposing (onClick, onInput)
 import Run exposing (..)
 
 
@@ -15,6 +15,9 @@ type Model
     = EsperandoGames
     | GamesConseguidos (List Game)
     | Jugando RunningGame
+    | WaitingProfile
+    | Profile Profile
+    | ProfileSearchPage Location
 
 
 init : ( Model, Cmd Msg )
@@ -31,13 +34,29 @@ type Msg
     | GamesUpdated (List Game)
     | SeleccionarCelda Celda
     | Join Game
+    | SearchProfile
+    | ProfileGot Profile
+    | UpdatedProfileToSearch Location
+    | GoToProfileSearch
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case ( model, msg ) of
+        ( ProfileSearchPage location, UpdatedProfileToSearch newLocation ) ->
+            ( ProfileSearchPage newLocation, Cmd.none )
+
+        ( ProfileSearchPage location, SearchProfile ) ->
+            ( WaitingProfile, searchProfile location )
+
+        ( WaitingProfile, ProfileGot profile ) ->
+            ( Profile profile, Cmd.none )
+
         ( _, NoOp ) ->
             ( model, Cmd.none )
+
+        ( GamesConseguidos _, GoToProfileSearch ) ->
+            ( ProfileSearchPage "", Cmd.none )
 
         ( EsperandoGames, GamesUpdated games ) ->
             ( GamesConseguidos games, Cmd.none )
@@ -62,12 +81,26 @@ view model =
         GamesConseguidos games ->
             div []
                 [ h1 [] [ text "Games" ]
+                , button [ onClick GoToProfileSearch ] [ text "Search profile" ]
                 , ul [] <|
                     List.map viewGame games
                 ]
 
         Jugando game ->
             viewRunningGame game
+
+        Profile profile ->
+            aHrefToBlockChain profile [ text profile.location ]
+
+        WaitingProfile ->
+            div [] [ text "cargando" ]
+
+        ProfileSearchPage location ->
+            div []
+                [ label [] [ text "See profile for address: " ]
+                , input [ onInput UpdatedProfileToSearch ] [ text location ]
+                , button [ onClick SearchProfile ] [ text "Search" ]
+                ]
 
 
 viewGame game =
@@ -203,5 +236,13 @@ main =
         , update = update
         , subscriptions =
             \model ->
-                updatedGames GamesUpdated
+                case model of
+                    EsperandoGames ->
+                        updatedGames GamesUpdated
+
+                    WaitingProfile ->
+                        profileFound ProfileGot
+
+                    _ ->
+                        Sub.none
         }
