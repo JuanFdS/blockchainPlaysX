@@ -29,12 +29,8 @@ async function startBlockchain() {
     characters: game.characters.map(serializeCharacter)
   }))
 
-  console.log(games);
-  console.log(gamesAMandar);
-
   elm.ports.searchProfile.subscribe(async (addressLocation) => {
     let run = await getRun(addressLocation);
-    console.log({ location: run.owner.owner })
     elm.ports.profileFound.send( { location: run.owner.owner });
   });
   elm.ports.updatedGames.send(gamesAMandar);

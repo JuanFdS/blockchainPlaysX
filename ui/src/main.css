@@ -14,6 +14,7 @@ body {
   margin: 0;
   text-align: center;
   color: #293c4b;
+  background-color: paleturquoise;
 }
 
 h1 {
@@ -23,4 +24,15 @@ h1 {
 img {
   margin: 20px 0;
   max-width: 200px;
+}
+
+.tab {
+  width: 100%;
+  background-color: azure;
+  padding-top: 0.7em;
+  padding-bottom: 0.7em;
+}
+
+.tab:hover {
+    background-color: slategray;
 }

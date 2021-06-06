@@ -37,7 +37,7 @@ type Msg
     | SearchProfile
     | ProfileGot Profile
     | UpdatedProfileToSearch Location
-    | GoToProfileSearch
+    | GoTo Model
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -55,9 +55,6 @@ update msg model =
         ( _, NoOp ) ->
             ( model, Cmd.none )
 
-        ( GamesConseguidos _, GoToProfileSearch ) ->
-            ( ProfileSearchPage "", Cmd.none )
-
         ( EsperandoGames, GamesUpdated games ) ->
             ( GamesConseguidos games, Cmd.none )
 
@@ -67,40 +64,65 @@ update msg model =
         ( GamesConseguidos _, Join game ) ->
             ( Jugando { game = game, selectedCharacter = Nothing }, Cmd.none )
 
+        ( _, GoTo newModel ) ->
+            ( newModel, Cmd.none )
+
         _ ->
             ( model, Cmd.none )
 
 
+viewWithHeaders : Html Msg -> Html Msg
+viewWithHeaders page =
+    div
+        []
+        [ div [ style "display" "flex" ]
+            [ tab "Profile" <| ProfileSearchPage ""
+            , tab "Games" <| GamesConseguidos []
+            ]
+        , page
+        ]
+
+
+tab name newPage =
+    div
+        [ style "width" "100%"
+        , class "tab"
+        , onClick <| GoTo <| newPage
+        ]
+        [ text name ]
+
+
 view : Model -> Html Msg
 view model =
-    case model of
-        EsperandoGames ->
-            div []
-                [ text "cargando" ]
+    viewWithHeaders <|
+        case model of
+            EsperandoGames ->
+                div []
+                    [ text "cargando" ]
 
-        GamesConseguidos games ->
-            div []
-                [ h1 [] [ text "Games" ]
-                , button [ onClick GoToProfileSearch ] [ text "Search profile" ]
-                , ul [] <|
-                    List.map viewGame games
-                ]
+            GamesConseguidos games ->
+                div []
+                    [ h1 [] [ text "Games" ]
+                    , button [ onClick <| GoTo <| ProfileSearchPage "" ] [ text "Search profile" ]
+                    , ul [] <|
+                        List.map viewGame games
+                    ]
 
-        Jugando game ->
-            viewRunningGame game
+            Jugando game ->
+                viewRunningGame game
 
-        Profile profile ->
-            aHrefToBlockChain profile [ text profile.location ]
+            Profile profile ->
+                aHrefToBlockChain profile [ text profile.location ]
 
-        WaitingProfile ->
-            div [] [ text "cargando" ]
+            WaitingProfile ->
+                div [] [ text "cargando" ]
 
-        ProfileSearchPage location ->
-            div []
-                [ label [] [ text "See profile for address: " ]
-                , input [ onInput UpdatedProfileToSearch ] [ text location ]
-                , button [ onClick SearchProfile ] [ text "Search" ]
-                ]
+            ProfileSearchPage location ->
+                div []
+                    [ label [] [ text "See profile for address: " ]
+                    , input [ onInput UpdatedProfileToSearch ] [ text location ]
+                    , button [ onClick SearchProfile ] [ text "Search" ]
+                    ]
 
 
 viewGame game =
