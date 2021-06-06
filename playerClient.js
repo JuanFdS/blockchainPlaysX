@@ -1,7 +1,8 @@
+const { getRunInstanceClient, getRunInstanceClient2 } = require("./main.js");
 const Run = require("run-sdk");
 
-let INVRQ_CLASS_LOCATION = "faa6995a382c7c6615f1b61698bfb6db2dc21651c450523985c4a807a4dde8e9_o1"
-let JOYSTICK_CLASS_LOCATION = "faa6995a382c7c6615f1b61698bfb6db2dc21651c450523985c4a807a4dde8e9_o3"
+let INVRQ_CLASS_LOCATION = "31aa49bf375959d9385b631a4935bc9044dece869e6d2e070fa75bee9ddade6d_o1"
+let JOYSTICK_CLASS_LOCATION = "31aa49bf375959d9385b631a4935bc9044dece869e6d2e070fa75bee9ddade6d_o3"
 
 class PlayerClient {
     constructor(runInstance) {
@@ -53,6 +54,7 @@ class PlayerClient {
         await Promise.all(this.runInstance.inventory.code.map(j => j.destroy()));
     }
 }
+
 
 module.exports = {
     PlayerClient

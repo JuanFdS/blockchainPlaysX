@@ -39,12 +39,17 @@ class Character extends Jig {
     }
 
     isNearTo(opponent) {
-        return this.position.x === opponent.position.x && Math.abs(this.position.y - opponent.position.y) <= 1;
+        return this.position.x === opponent.position.x && this.abs(this.position.y - opponent.position.y) <= 1;
+    }
+
+    abs(x) {
+        expect(x).toBeNumber();
+        return (x < 0) ? (-x) : x
     }
 }
 
 Character.metadata = {emoji: '🤺'}
-Character.deps = {MAP_LENGTH}
+Character.deps = {expect: Run.extra.expect, MAP_LENGTH}
 
 class Joystick extends Jig {
     init(game, team) {
