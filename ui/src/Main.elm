@@ -3,7 +3,8 @@ module Main exposing (..)
 import Browser
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Run exposing (Game, updatedGames, Position)
+import Html.Events exposing (onClick)
+import Run exposing (..)
 
 
 
@@ -13,6 +14,7 @@ import Run exposing (Game, updatedGames, Position)
 type Model
     = EsperandoGames
     | GamesConseguidos (List Game)
+    | Jugando RunningGame
 
 
 init : ( Model, Cmd Msg )
@@ -27,20 +29,27 @@ init =
 type Msg
     = NoOp
     | GamesUpdated (List Game)
+    | SeleccionarCelda Celda
+    | Join Game
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case msg of
-        NoOp ->
+    case ( model, msg ) of
+        ( _, NoOp ) ->
             ( model, Cmd.none )
 
-        GamesUpdated games ->
+        ( EsperandoGames, GamesUpdated games ) ->
             ( GamesConseguidos games, Cmd.none )
 
+        ( Jugando runningGame, SeleccionarCelda celda ) ->
+            ( Jugando { runningGame | selectedCharacter = characterIn celda }, Cmd.none )
 
+        ( GamesConseguidos _, Join game ) ->
+            ( Jugando { game = game, selectedCharacter = Nothing }, Cmd.none )
 
----- VIEW ----
+        _ ->
+            ( model, Cmd.none )
 
 
 view : Model -> Html Msg
@@ -52,47 +61,130 @@ view model =
 
         GamesConseguidos games ->
             div []
-                [ img [ src "/logo.svg" ] []
-                , h1 [] [ text "Games" ]
+                [ h1 [] [ text "Games" ]
                 , ul [] <|
-                    List.map
-                        (\game ->
-                            li []
-                                [ a [ href <| linkToBlockchain game.location ]
-                                    [ text game.name
-                                    ]
-                                , button [] [ text "//TODO: Unirse" ]
-                                , div [style "display" "flex", style "flex-direction" "column", style "align-items" "center"] [
-                                    tablero game.characters
-                                    ]
-                                ]
-                        )
-                        games
+                    List.map viewGame games
                 ]
 
+        Jugando game ->
+            viewRunningGame game
+
+
+viewGame game =
+    li []
+        [ button [ onClick (Join game) ] [ text "Join" ]
+        , aHrefToBlockChain game [ text game.name ]
+        ]
+
+
+viewRunningGame : RunningGame -> Html Msg
+viewRunningGame runningGame =
+    li []
+        [ a [ href <| linkToBlockchain runningGame.game.location ]
+            [ text runningGame.game.name
+            ]
+        , button [] [ text "//TODO: Unirse" ]
+        , div [ style "display" "flex", style "flex-direction" "column", style "align-items" "center" ]
+            [ tablero runningGame.game.characters
+            , case runningGame.selectedCharacter of
+                Nothing ->
+                    text ""
+
+                Just character ->
+                    viewCharacter character
+            ]
+        ]
+
+
+viewCharacter : Character -> Html Msg
+viewCharacter character =
+    div [ style "display" "flex", style "flex-direction" "column" ]
+        [ div [] [ text <| "Health: " ++ String.fromInt character.health ]
+        , aHrefToBlockChain character [ text "Open in blockchain explorer" ]
+        ]
+
+
+
 -- Por ahora solo sirve para cosas de 8x20, no solo por los rangos si no por el auto auto auto auto auto etc
--- also, rotisimo el tema de las coordenadas como van a ver, arreglarlo se deja como ejercicio el lector (?
-tablero : List Position -> Html Msg
-tablero characters = div [style "display" "grid", style "grid-template-columns" "auto auto auto auto auto auto auto auto", style "width" "200px"]
-                         (List.range 1 8 |> List.indexedMap (\x _ -> (List.range 1 20 |> List.indexedMap (\y _ -> celdaSegunSiHayPersonaje characters (x, y)))) |> List.concat)
+
+
+tablero : List Character -> Html Msg
+tablero characters =
+    div [ style "display" "grid", style "grid-template-columns" "auto auto auto auto auto auto auto auto", style "width" "200px" ]
+        (List.range 1 20 |> List.indexedMap (\x _ -> List.range 1 8 |> List.indexedMap (\y _ -> celdaSegunSiHayPersonaje characters ( x, y ))) |> List.concat)
+
+
 
 -- Despues habria que poner diferentes cosas segun que personaje es, ahora son todos ROJOS
-celdaSegunSiHayPersonaje : List Position -> (Int, Int) -> Html Msg
-celdaSegunSiHayPersonaje posicionesPersonajes (x, y) = case List.any (\p -> p.x == x && p.y == y) posicionesPersonajes of
-    True -> viewCelda OcupadaRojo
-    False -> viewCelda Libre
 
 
-type Celda = Libre | OcupadaRojo | OcupadaAzul
+find condition list =
+    List.head <| List.filter condition list
 
-viewCelda : Celda -> Html Msg
-viewCelda celda = div [style "background" (if celda == OcupadaRojo then "red" else "aliceblue"),
-                       style "border-width" "thin",
-                       style "border-style" "groove",
-                       style "border-color" "deepskyblue",
-                       style "height" "1.5em",
-                       style "width" "2em"]
-                      [text <| if celda == Libre then "" else "🤺"]
+
+celdaSegunSiHayPersonaje : List Character -> ( Int, Int ) -> Html Msg
+celdaSegunSiHayPersonaje posicionesPersonajes ( y, x ) =
+    case find (\p -> p.position.x == x && p.position.y == y) posicionesPersonajes of
+        Just character ->
+            viewCelda ( x, y ) <| Ocupada character
+
+        Nothing ->
+            viewCelda ( x, y ) Libre
+
+
+type Celda
+    = Libre
+    | Ocupada Character
+
+
+characterIn celda =
+    case celda of
+        Libre ->
+            Nothing
+
+        Ocupada c ->
+            Just c
+
+
+ocupada celda =
+    celda /= Libre
+
+
+viewCelda : ( Int, Int ) -> Celda -> Html Msg
+viewCelda ( x, y ) celda =
+    div
+        [ style "background"
+            (if ocupada celda then
+                "red"
+
+             else
+                "aliceblue"
+            )
+        , style "border-width" "thin"
+        , style "border-style" "groove"
+        , style "border-color" "deepskyblue"
+        , style "height" "1.5em"
+        , style "width" "2em"
+        , onClick (SeleccionarCelda celda)
+        ]
+        [ text <|
+            (if celda == Libre then
+                ""
+
+             else
+                "🤺"
+            )
+                ++ String.fromInt x
+                ++ "-"
+                ++ String.fromInt y
+        ]
+
+
+aHrefToBlockChain : { x | location : String } -> List (Html Msg) -> Html Msg
+aHrefToBlockChain jig children =
+    a [ target "_blank", href <| linkToBlockchain jig.location ]
+        children
+
 
 linkToBlockchain : String -> String
 linkToBlockchain location =
@@ -109,5 +201,7 @@ main =
         { view = view
         , init = \_ -> init
         , update = update
-        , subscriptions = \model -> updatedGames GamesUpdated
+        , subscriptions =
+            \model ->
+                updatedGames GamesUpdated
         }

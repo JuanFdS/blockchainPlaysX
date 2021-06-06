@@ -12,10 +12,21 @@ async function startBlockchain() {
 
   const games = decimeLosGames();
 
+  const serializeCharacter = (character) => {
+    return ({
+      position: {
+        x: character.position.x,
+        y: character.position.y
+      },
+      health: character.health,
+      location: character.location
+    })
+  }
+
   const gamesAMandar = games.map((game) => ({
     name: game.gameName,
     location: game.location,
-    characters: game.characters.map(character => ({ x: character.position.x, y: character.position.y }))
+    characters: game.characters.map(serializeCharacter)
   }))
 
   console.log(games);
