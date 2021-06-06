@@ -1,18 +1,18 @@
 
-export function getRun(address) {
-    let run = new Run({ network: "test", owner: address });
+export function getRun() {
+    let run = new Run(JSON.parse(localStorage.getItem('runConfig')));
     run.trust('*')
     return run
 }
 
 let servidor = {
-    run: getRun("mj1WZ8wTimESFzLgio12iG55M5dYR16PwR")
+    run: getRun()
 }
 
 const run = servidor.run
 const JOYSTICK_ADDRESS = "31aa49bf375959d9385b631a4935bc9044dece869e6d2e070fa75bee9ddade6d_o3"
 const TURN_ADDRESS = "31aa49bf375959d9385b631a4935bc9044dece869e6d2e070fa75bee9ddade6d_o4"
-const GAME_ADDRESS = "31aa49bf375959d9385b631a4935bc9044dece869e6d2e070fa75bee9ddade6d_o2"
+const GAME_ADDRESS = "df19d0b395f705d752de7b8ca75103fdc6e7680e15b70356803996c4ba2a9401_o1"
 const INVITATION_REQUEST_ADDRESS = "31aa49bf375959d9385b631a4935bc9044dece869e6d2e070fa75bee9ddade6d_o1"
 
 export async function loadTo3() {
@@ -23,6 +23,8 @@ export async function loadTo3() {
     return run.inventory.sync()
 }
 
-export function decimeLosGames() {
-    return run.inventory.jigs.filter(j => j instanceof Game)
+export async function decimeLosGames() {
+    await Game.sync();
+    await Promise.all(Game.all.map(g => g.sync()));
+    return Game.all
 }
