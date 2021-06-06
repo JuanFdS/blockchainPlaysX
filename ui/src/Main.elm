@@ -2,19 +2,22 @@ module Main exposing (..)
 
 import Browser
 import Html exposing (..)
-import Html.Attributes exposing (src)
+import Html.Attributes exposing (href, src)
+import Run exposing (Game, updatedGames)
+
 
 
 ---- MODEL ----
 
 
-type alias Model =
-    {}
+type Model
+    = EsperandoGames
+    | GamesConseguidos (List Game)
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( {}, Cmd.none )
+    ( EsperandoGames, Cmd.none )
 
 
 
@@ -23,11 +26,17 @@ init =
 
 type Msg
     = NoOp
+    | GamesUpdated (List Game)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    ( model, Cmd.none )
+    case msg of
+        NoOp ->
+            ( model, Cmd.none )
+
+        GamesUpdated games ->
+            ( GamesConseguidos games, Cmd.none )
 
 
 
@@ -36,11 +45,32 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    div []
-        [ img [ src "/logo.svg" ] []
-        , h1 [] [ text "Games" ]
-        , ul [] [li [] [text "VAMOS COLOON!"]]
-        ]
+    case model of
+        EsperandoGames ->
+            div []
+                [ text "cargando" ]
+
+        GamesConseguidos games ->
+            div []
+                [ img [ src "/logo.svg" ] []
+                , h1 [] [ text "Games" ]
+                , ul [] <|
+                    List.map
+                        (\game ->
+                            li []
+                                [ a [ href <| linkToBlockchain game.location ]
+                                    [ text game.name
+                                    ]
+                                , button [] [ text "Unirse (?" ]
+                                ]
+                        )
+                        games
+                ]
+
+
+linkToBlockchain : String -> String
+linkToBlockchain location =
+    "https://run.network/explorer/?query=" ++ location ++ "&network=test"
 
 
 
@@ -53,5 +83,5 @@ main =
         { view = view
         , init = \_ -> init
         , update = update
-        , subscriptions = always Sub.none
+        , subscriptions = \model -> updatedGames GamesUpdated
         }

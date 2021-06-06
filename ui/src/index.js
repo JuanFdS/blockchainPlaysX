@@ -1,11 +1,24 @@
 import './main.css';
-import { Elm } from './Main.elm';
+import {Elm} from './Main.elm';
 import * as serviceWorker from './serviceWorker';
-import './ui'
+import {decimeLosGames, loadTo3} from "./ui";
 
-Elm.Main.init({
+const elm = Elm.Main.init({
   node: document.getElementById('root')
 });
+
+async function startBlockchain() {
+  await loadTo3();
+
+  const games = decimeLosGames();
+
+  console.log(games);
+
+  elm.ports.updatedGames.send(games.map((game) => ({name: game.gameName, location: game.location})));
+}
+
+startBlockchain()
+
 
 // If you want your app to work offline and load faster, you can change
 // unregister() to register() below. Note this comes with some pitfalls.
