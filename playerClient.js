@@ -1,7 +1,9 @@
-import {getRunInstanceClient} from "./main.js";
-import Run from "run-sdk";
+const {getRunInstanceClient} =  require("./main.js");
+const Run = require("run-sdk");
 
-export class PlayerClient {
+const INVITATION_REQUEST = "2c4a1bdc04ab9e164bc978ca0d9772223cec152ead8cb4249c5a4d8056631638_o1"
+
+class PlayerClient {
     constructor() {
     }
 

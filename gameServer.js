@@ -1,114 +1,132 @@
-import {getRunInstanceClient, getRunInstanceServer} from "./main.js";
-import Run from "run-sdk";
+const { getRunInstanceClient, getRunInstanceServer, setRunServer } = require("./main.js");
+const Run = require("run-sdk");
 
-export async function deployGameClasses(run) {
-    const RUNNING_STATUS = 'RUNNING';
-    const END_STATUS = 'END';
+const RUNNING_STATUS = 'RUNNING';
+const END_STATUS = 'END';
 
-    const UP = 'UP';
-    const DOWN = 'DOWN';
-    const LEFT = 'LEFT';
-    const RIGHT = 'RIGHT';
+const UP = 'UP';
+const DOWN = 'DOWN';
+const LEFT = 'LEFT';
+const RIGHT = 'RIGHT';
 
-    class Player extends Jig {
-        init() {
-            this.position_x = 0;
-            this.position_y = 0;
+class Player extends Jig {
+    init() {
+        this.position_x = 0;
+        this.position_y = 0;
+    }
+
+    setName(playerName) {
+        expect(playerName).toBeString();
+        this.playerName = playerName;
+    }
+
+    move(direction) {
+        expect(direction).toBeString();
+        switch (direction) {
+            case UP:
+                this.position_y++;
+                break;
+            case DOWN:
+                this.position_y--;
+                break;
+            case LEFT:
+                this.position_x--;
+                break;
+            case RIGHT:
+                this.position_x++;
+                break;
         }
+    }
+}
 
-        setName(playerName) {
-            expect(playerName).toBeString();
-            this.playerName = playerName;
-        }
+Player.deps = { UP, DOWN, LEFT, RIGHT, expect: Run.extra.expect }
+Player.metadata = { emoji: '⚔️' }
 
-        move(direction) {
-            expect(direction).toBeString();
-            switch (direction) {
-                case UP:
-                    this.position_y++;
-                    break;
-                case DOWN:
-                    this.position_y--;
-                    break;
-                case LEFT:
-                    this.position_x--;
-                    break;
-                case RIGHT:
-                    this.position_x++;
-                    break;
-            }
+class Joystick extends Jig {
+    init() {
+        this.commands = []
+    }
+
+    send(player) {
+        expect(player).toBeString();
+        this.owner = player;
+    }
+
+    press(action) {
+        this.commands.push({ action: action, timestamp: new Date().toISOString() })
+    }
+
+    actionsSince(moment) {
+        return this.commands.map(({ action, timestamp }) => ({ action, timestamp: new Date(timestamp) }))
+            .filter(({ action, timestamp }) => timestamp > moment)
+    }
+}
+Joystick.deps = { expect: Run.extra.expect }
+Joystick.metadata = { emoji: '🕹️' }
+
+class Game extends Jig {
+    init() {
+        this.reset()
+    }
+
+    reset() {
+        this.players = [];
+        this.joystick = [];
+    }
+
+    begin(gameName, numberOfPlayers) {
+        expect(gameName).toBeString();
+        expect(numberOfPlayers).toBeNumber();
+        this.gameName = gameName;
+        this.numberOfPlayers = numberOfPlayers;
+        this.status = RUNNING_STATUS;
+    }
+
+    join(player) {
+        expect(player).toBeInstanceOf(Player)
+        if (this.numberOfPlayers > this.players.length && this.status === RUNNING_STATUS) {
+            this.players.push(player);
         }
     }
 
-    Player.deps = {UP, DOWN, LEFT, RIGHT, expect: Run.extra.expect}
-    Player.metadata = {emoji: '⚔️'}
-
-    class Joystick extends Jig {
-        send(player) {
-            expect(player).toBeString();
-            this.owner = player;
-        }
-    }
-    Joystick.deps = {expect: Run.extra.expect}
-
-    class Game extends Jig {
-        init() {
-            this.players = [];
-            this.joystick = [];
-        }
-
-        begin(gameName, numberOfPlayers) {
-            expect(gameName).toBeString();
-            expect(numberOfPlayers).toBeNumber();
-            this.gameName = gameName;
-            this.numberOfPlayers = numberOfPlayers;
-            this.status = RUNNING_STATUS;
-        }
-
-        join(player) {
-            expect(player).toBeInstanceOf(Player)
-            if (this.numberOfPlayers > this.players.length && this.status === RUNNING_STATUS) {
-                this.players.push(player);
-            }
-        }
-
-        add(joystick) {
-            expect(joystick).toBeInstanceOf(Joystick);
-            this.joystick.push(joystick);
-        }
-
-        endGame() {
-            this.status = END_STATUS;
-        }
-    }
-    Game.deps = {RUNNING_STATUS, END_STATUS, expect: Run.extra.expect, Player, Joystick}
-
-    const SERVER_OWNER = run.owner.address
-
-    class InvitationRequest extends Jig {
-        sendInvitation() {
-            this.player = this.owner;
-            this.owner = SERVER_OWNER;
-        }
-
-        sendJoystick(game) {
-            expect(game).toBeInstanceOf(Game);
-            const joystick = new Joystick();
-            game.add(joystick);
-            joystick.send(this.player);
-            return joystick;
-        }
+    add(joystick) {
+        expect(joystick).toBeInstanceOf(Joystick);
+        this.joystick.push(joystick);
     }
 
-    InvitationRequest.deps = {SERVER_OWNER, Joystick, Game, expect: Run.extra.expect}
+    endGame() {
+        this.status = END_STATUS;
+    }
+}
+Game.deps = { RUNNING_STATUS, END_STATUS, expect: Run.extra.expect, Player, Joystick }
+const SERVER_OWNER = "mj1WZ8wTimESFzLgio12iG55M5dYR16PwR"
+class InvitationRequest extends Jig {
+    sendInvitation() {
+        this.player = this.owner;
+        this.owner = SERVER_OWNER;
+    }
 
+    sendJoystick(game) {
+        expect(game).toBeInstanceOf(Game);
+        const joystick = new Joystick();
+        game.add(joystick);
+        joystick.send(this.player);
+        return joystick;
+    }
+}
+
+InvitationRequest.deps = { SERVER_OWNER, Joystick, Game, expect: Run.extra.expect }
+
+// setRunServer().then(() => console.log("Run setea3 a server"))
+
+async function deployGameClasses(run) {
     await run.deploy(Player);
     await run.deploy(Joystick);
     await run.deploy(Game);
     await run.deploy(InvitationRequest);
     await run.sync();
     console.log("Classes deployed", Player, Joystick, Game, InvitationRequest);
-
+    
     return {
         player: Player.location,
         game: Game.location,
@@ -117,7 +135,7 @@ export async function deployGameClasses(run) {
     };
 }
 
-export class GameServer {
+class GameServer {
     constructor() {
     }
 
@@ -171,6 +189,6 @@ export class GameServer {
             console.log("output: ", playerWantsToJoinTx.outputs);
         }
 
-        return await playerWantsToJoinTx.publish({pay: false});
+        return await playerWantsToJoinTx.publish({ pay: false });
     }
 }
