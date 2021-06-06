@@ -8,6 +8,8 @@ const UP = 'UP';
 const DOWN = 'DOWN';
 const LEFT = 'LEFT';
 const RIGHT = 'RIGHT';
+const MAP_LENGTH = 20;
+const MAP_WIDTH = 8;
 
 class Joystick extends Jig {
     init(game) {
@@ -31,6 +33,30 @@ class Turn extends Jig {}
 
 Turn.metadata = { emoji: '⌛' }
 
+
+class Character extends Jig {
+    init(health, direction) {
+        this.direction = direction
+        this.position = { x: 0, y: this.goingUp() ? MAP_LENGTH : 0 }
+        this.health = health
+    }
+
+    goingUp() {
+        return this.direction == "UP"
+    }
+
+    tick() {
+        if(this.goingUp()) {
+            this.position.y -= 1
+        } else {
+            this.position.y += 1
+        }
+    }
+}
+
+Character.metadata = { emoji: '🤺' }
+Character.deps = { MAP_LENGTH }
+
 class Game extends Jig {
     init() {
         this.reset()
@@ -39,6 +65,7 @@ class Game extends Jig {
     reset() {
         this.players = [];
         this.joystick = [];
+        this.characters = [];
     }
 
     currentTurn() {
@@ -57,10 +84,16 @@ class Game extends Jig {
     add(joystick) {
         expect(joystick).toBeInstanceOf(Joystick);
         this.joystick.push(joystick);
+        this.characters.push(new Character(100, "UP"));
     }
 
     nextTurn() {
         this.currentTurn = new Turn();
+    }
+
+    tick() {
+        this.characters.forEach(character => character.tick());
+        this.nextTurn();
     }
 
     endGame() {
@@ -68,8 +101,9 @@ class Game extends Jig {
     }
 }
 
-Game.deps = { RUNNING_STATUS, END_STATUS, expect: Run.extra.expect, Joystick, Turn }
+Game.deps = { MAP_LENGTH, RUNNING_STATUS, END_STATUS, expect: Run.extra.expect, Joystick, Turn, Character }
 Game.metadata = { emoji: '👾' }
+
 
 const SERVER_OWNER = "mj1WZ8wTimESFzLgio12iG55M5dYR16PwR"
 class InvitationRequest extends Jig {
@@ -87,10 +121,12 @@ class InvitationRequest extends Jig {
     }
 }
 
+InvitationRequest.metadata = { emoji: '📨' }
+
 InvitationRequest.deps = { SERVER_OWNER, Joystick, Game, expect: Run.extra.expect }
 
 // setRunServer().then(() => console.log("Run setea3 a server"))
-const CLASES = [InvitationRequest, Joystick, Turn, Game];
+const CLASES = [Character, InvitationRequest, Joystick, Turn, Game];
 
 async function deployGameClasses(run) {
     await Promise.all(CLASES.map(c => {
@@ -109,6 +145,12 @@ async function deployGameClasses(run) {
 
 class GameServer {
     constructor() {
+    }
+
+    async resetearYEmpezarDeNuevo() {
+        await this.destroyAll()
+        await this.deployClasses()
+        await this.beginGame()
     }
 
     async deployClasses() {

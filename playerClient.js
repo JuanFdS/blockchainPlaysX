@@ -1,7 +1,7 @@
 const {getRunInstanceClient} =  require("./main.js");
 const Run = require("run-sdk");
 
-const INVITATION_REQUEST = "2c4a1bdc04ab9e164bc978ca0d9772223cec152ead8cb4249c5a4d8056631638_o1"
+const INVITATION_REQUEST = "3c3a4de9380a22a81f817a6962a5d45b39f25690475528dab433ab39ba0c4100_o1"
 
 class PlayerClient {
     constructor() {

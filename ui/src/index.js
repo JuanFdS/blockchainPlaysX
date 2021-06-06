@@ -12,9 +12,16 @@ async function startBlockchain() {
 
   const games = decimeLosGames();
 
-  console.log(games);
+  const gamesAMandar = games.map((game) => ({
+    name: game.gameName,
+    location: game.location,
+    characters: game.characters.map(character => ({ x: character.position.x, y: character.position.y }))
+  }))
 
-  elm.ports.updatedGames.send(games.map((game) => ({name: game.gameName, location: game.location})));
+  console.log(games);
+  console.log(gamesAMandar);
+
+  elm.ports.updatedGames.send(gamesAMandar);
 }
 
 startBlockchain()
