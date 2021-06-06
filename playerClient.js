@@ -1,8 +1,8 @@
 const { getRunInstanceClient, getRunInstanceClient2 } = require("./main.js");
 const Run = require("run-sdk");
 
-let INVRQ_CLASS_LOCATION = "31aa49bf375959d9385b631a4935bc9044dece869e6d2e070fa75bee9ddade6d_o1"
-let JOYSTICK_CLASS_LOCATION = "31aa49bf375959d9385b631a4935bc9044dece869e6d2e070fa75bee9ddade6d_o3"
+let INVRQ_CLASS_LOCATION = "87950daf55a42ecfd3e24adbf2540bad9436700392eaa0b65f2d9c40d6e14d5a_o1"
+let JOYSTICK_CLASS_LOCATION = "87950daf55a42ecfd3e24adbf2540bad9436700392eaa0b65f2d9c40d6e14d5a_o3"
 
 class PlayerClient {
     constructor(runInstance) {
@@ -44,7 +44,7 @@ class PlayerClient {
         const J = await this.runInstance.load(JOYSTICK_CLASS_LOCATION);
         const joystick = this.runInstance.inventory.jigs.filter(j => j instanceof J)[0];
         await joystick.sync();
-        joystick.deployCharacter(xPosition);
+        joystick.deployHero(xPosition);
         await joystick.sync();
     }
 

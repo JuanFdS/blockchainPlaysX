@@ -10,23 +10,23 @@ const elm = Elm.Main.init({
 async function startBlockchain() {
   await loadTo3();
 
-  const games = decimeLosGames();
+  const games = await decimeLosGames();
 
-  const serializeCharacter = (character) => {
+  const serializeCharacter = (pawn) => {
     return ({
       position: {
-        x: character.position.x,
-        y: character.position.y
+        x: pawn.position.x,
+        y: pawn.position.y
       },
-      health: character.health,
-      location: character.location
+      health: pawn.health,
+      location: pawn.location
     })
   }
 
   const gamesAMandar = games.map((game) => ({
     name: game.gameName,
     location: game.location,
-    characters: game.characters.map(serializeCharacter)
+    characters: game.pawns.map(serializeCharacter)
   }))
 
   elm.ports.searchProfile.subscribe(async (addressLocation) => {

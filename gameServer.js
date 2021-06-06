@@ -1,7 +1,7 @@
 const { getRunInstanceServer } = require("./main.js");
-const { Character, InvitationRequest, Joystick, Turn, Game } = require("./jigs.js");
+const { InvitationRequest, Joystick, Turn, Game, Pawn, Hero, Prize} = require("./jigs.js");
 
-const CLASES = [Character, InvitationRequest, Joystick, Turn, Game];
+const CLASES = [InvitationRequest, Joystick, Turn, Game, Pawn, Hero, Prize];
 
 async function deployGameClasses(run) {
     await Promise.all(CLASES.map(c => {
@@ -35,7 +35,7 @@ class GameServer {
 
     async beginGame() {
         const Game = await this.runInstance.load(this.classesLocations.game);
-        const pepitaGame = new Game();
+        const pepitaGame = Game.createGame();
         pepitaGame.begin("pepita", 1);
         await pepitaGame.sync();
         this.gameLocation = pepitaGame.location;

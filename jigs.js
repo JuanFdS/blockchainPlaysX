@@ -11,11 +11,12 @@ const MAP_LENGTH = 20;
 const MAP_WIDTH = 8;
 const SERVER_OWNER = "mj1WZ8wTimESFzLgio12iG55M5dYR16PwR"
 
-class Character extends Jig {
-    init(health, direction, xPosition) {
+class Pawn extends Jig {
+    init(health, direction, column, hero) {
         this.direction = direction
-        this.position = {x: xPosition, y: this.goingUp() ? MAP_LENGTH : 0}
+        this.position = {x: column, y: this.goingUp() ? MAP_LENGTH : 0}
         this.health = health
+        this.originalHero = hero
     }
 
     send(gameOwner) {
@@ -39,17 +40,49 @@ class Character extends Jig {
     }
 
     isNearTo(opponent) {
-        return this.position.x === opponent.position.x && this.abs(this.position.y - opponent.position.y) <= 1;
+        return this.position.x === opponent.position.x && this._abs(this.position.y - opponent.position.y) <= 1;
     }
 
-    abs(x) {
+    _abs(x) {
         expect(x).toBeNumber();
         return (x < 0) ? (-x) : x
     }
 }
 
-Character.metadata = {emoji: '🤺'}
-Character.deps = {expect: Run.extra.expect, MAP_LENGTH}
+Pawn.metadata = {emoji: '️♟️'}
+Pawn.deps = {expect: Run.extra.expect, MAP_LENGTH}
+
+class Prize extends Jig {
+    init() {
+        Prize.auth()
+        this.usado = false
+    }
+
+    consumePrize() {
+        this.usado = true
+    }
+}
+
+Prize.deps = {}
+Prize.metadata = { emoji: '🏆' }
+
+class Hero extends Jig {
+    init(name) {
+        this.name = name
+        this.experience = 0
+    }
+
+    consumePrize(prize) {
+        expect(prize).toBeInstanceOf(Prize)
+        if (! prize.usado) {
+            prize.consumirse();
+            this.experience = this.experience + prize.experience
+        }
+    }
+}
+
+Hero.metadata = {emoji: '🦸'}
+Hero.deps = {expect: Run.extra.expect, Prize }
 
 class Joystick extends Jig {
     init(game, team) {
@@ -63,14 +96,12 @@ class Joystick extends Jig {
         this.owner = player;
     }
 
-    deployCharacter(xPosition) {
-        const character = new Character(100, this.team, xPosition);
-        character.send(SERVER_OWNER);
-        this.commands.push({character, turn: this.game.currentTurn})
+    deployHero(hero, column) {
+        this.commands.push({hero, column, turn: this.game.currentTurn})
     }
 }
 
-Joystick.deps = {expect: Run.extra.expect, SERVER_OWNER, Character}
+Joystick.deps = { expect: Run.extra.expect }
 Joystick.metadata = {emoji: '🕹️'}
 
 class Turn extends Jig {
@@ -80,13 +111,20 @@ Turn.metadata = {emoji: '⌛'}
 
 class Game extends Jig {
     init() {
+        expect(caller).toBe(Game)
         this.reset()
+    }
+
+    static createGame() {
+        const newGame = new Game();
+        this.all.push(newGame);
+        return newGame;
     }
 
     reset() {
         this.players = [];
         this.joysticks = [];
-        this.characters = [];
+        this.pawns = [];
         this.nextTeam = 'UP';
     }
 
@@ -96,6 +134,7 @@ class Game extends Jig {
         this.gameName = gameName;
         this.numberOfPlayers = numberOfPlayers;
         this.status = RUNNING_STATUS;
+        this.winner = null;
         this.currentTurn = new Turn();
     }
 
@@ -119,22 +158,44 @@ class Game extends Jig {
     }
 
     tick() {
+        if (this.status !== RUNNING_STATUS) {
+            return
+        }
         this.joysticks.forEach(j => {
             j.commands.filter(command => command.turn === this.currentTurn).forEach(command => {
-                this.characters.push(command.character);
+                this.pawns.push(new Pawn(health, j.team, command.column, command.hero));
             });
         });
-        const goingUp = this.characters.filter(ch => ch.goingUp());
-        const goingDown = this.characters.filter(ch => !ch.goingUp());
+
+        const goingUp = this.pawns.filter(p => p.goingUp());
+        const goingDown = this.pawns.filter(p => !p.goingUp());
         let engagedOnBattle = [];
-        goingUp.forEach(chUp => {
-            const enemiesNear = goingDown.filter(chDw => chUp.isNearTo(chDw));
+        goingUp.forEach(pUp => {
+            const enemiesNear = goingDown.filter(pDw => pUp.isNearTo(pDw));
             if (enemiesNear.length > 0) {
-                engagedOnBattle = [...engagedOnBattle, ...enemiesNear, chUp]
+                engagedOnBattle = [...engagedOnBattle, ...enemiesNear, pUp]
             }
         })
-        this.characters.forEach(character => character.tick(engagedOnBattle));
-        this.characters = this.characters.filter(character => character.health > 0);
+        this.pawns.forEach(p => p.tick(engagedOnBattle));
+        this.pawns = this.pawns.filter(p => p.health > 0);
+
+        const champions = this.pawns.filter(p => p.won())
+        if (champions.length > 0) {
+            const upChampions = champions.filter(p => p.direction === 'UP');
+            const downChampions = champions.filter(p => p.direction === 'DOWN');
+
+            if (upChampions.length > downChampions.length) {
+                this.winner = 'UP'
+                this.endGame()
+                return
+            }
+            if (upChampions.length < downChampions.length) {
+                this.winner = 'DOWN'
+                this.endGame()
+                return
+            }
+        }
+
         this.nextTurn();
     }
 
@@ -143,7 +204,8 @@ class Game extends Jig {
     }
 }
 
-Game.deps = {MAP_LENGTH, RUNNING_STATUS, END_STATUS, expect: Run.extra.expect, Joystick, Turn}
+Game.deps = {MAP_LENGTH, RUNNING_STATUS, END_STATUS, expect: Run.extra.expect, Joystick, Turn, Pawn};
+Game.all = [];
 Game.metadata = {emoji: '👾'}
 
 class InvitationRequest extends Jig {
@@ -166,5 +228,5 @@ InvitationRequest.metadata = {emoji: '📨'}
 InvitationRequest.deps = {SERVER_OWNER, Joystick, Game, expect: Run.extra.expect}
 
 module.exports = {
-    Character, InvitationRequest, Joystick, Turn, Game
+    Prize, Hero, Pawn, InvitationRequest, Joystick, Turn, Game
 }
