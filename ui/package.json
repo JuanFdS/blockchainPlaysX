@@ -9,7 +9,6 @@
     "build": "elm-app build",
     "format": "elm-format --yes tests/ src/",
     "lint": "elm-format --validate tests/ src/"
-
   },
   "keywords": [],
   "author": "",
