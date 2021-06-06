@@ -17,3 +17,8 @@ const invitacion = juego.unirme() //juego sigue siendo {}
 //server
 juego.empezar() // se buscan las invitaciones, lo resuelve ✨ la blockchain ✨
 
+let {getRunInstanceServer} = await import("./main.js")
+let {GameServer} = await import("./gameServer.js")
+let {PlayerClient} = await import("./playerClient.js")
+let run = getRunInstanceServer()
+

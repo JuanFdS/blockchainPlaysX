@@ -27,6 +27,24 @@ export class PlayerClient {
         return await joinTx.export();
     }
 
+    async sendInvitation(invitationRequestLocation) {
+        const runInstance = getRunInstanceClient();
+
+        const InvitationRequest = await runInstance.load(invitationRequestLocation);
+        const invitation = new InvitationRequest();
+        await invitation.sync();
+        invitation.sendInvitation();
+        await invitation.sync();
+    }
+
+    async destroyAll() {
+        const runInstance = getRunInstanceClient();
+
+        await runInstance.inventory.sync();
+        await Promise.all(runInstance.inventory.jigs.map(j => j.destroy()));
+        await Promise.all(runInstance.inventory.code.map(j => j.destroy()));
+    }
+
     async movePlayer(direction) {
         const runInstance = getRunInstanceClient();
 
