@@ -9,42 +9,10 @@ const DOWN = 'DOWN';
 const LEFT = 'LEFT';
 const RIGHT = 'RIGHT';
 
-class Player extends Jig {
-    init() {
-        this.position_x = 0;
-        this.position_y = 0;
-    }
-
-    setName(playerName) {
-        expect(playerName).toBeString();
-        this.playerName = playerName;
-    }
-
-    move(direction) {
-        expect(direction).toBeString();
-        switch (direction) {
-            case UP:
-                this.position_y++;
-                break;
-            case DOWN:
-                this.position_y--;
-                break;
-            case LEFT:
-                this.position_x--;
-                break;
-            case RIGHT:
-                this.position_x++;
-                break;
-        }
-    }
-}
-
-Player.deps = { UP, DOWN, LEFT, RIGHT, expect: Run.extra.expect }
-Player.metadata = { emoji: '⚔️' }
-
 class Joystick extends Jig {
-    init() {
-        this.commands = []
+    init(game) {
+        this.commands = [];
+        this.game = game;
     }
 
     send(player) {
@@ -53,16 +21,15 @@ class Joystick extends Jig {
     }
 
     press(action) {
-        this.commands.push({ action: action, timestamp: new Date().toISOString() })
-    }
-
-    actionsSince(moment) {
-        return this.commands.map(({ action, timestamp }) => ({ action, timestamp: new Date(timestamp) }))
-            .filter(({ action, timestamp }) => timestamp > moment)
+        this.commands.push({ action: action, turn: this.game.currentTurn })
     }
 }
 Joystick.deps = { expect: Run.extra.expect }
 Joystick.metadata = { emoji: '🕹️' }
+
+class Turn extends Jig {}
+
+Turn.metadata = { emoji: '⌛' }
 
 class Game extends Jig {
     init() {
@@ -74,19 +41,17 @@ class Game extends Jig {
         this.joystick = [];
     }
 
+    currentTurn() {
+        return this.currentTurn;
+    }
+
     begin(gameName, numberOfPlayers) {
         expect(gameName).toBeString();
         expect(numberOfPlayers).toBeNumber();
         this.gameName = gameName;
         this.numberOfPlayers = numberOfPlayers;
         this.status = RUNNING_STATUS;
-    }
-
-    join(player) {
-        expect(player).toBeInstanceOf(Player)
-        if (this.numberOfPlayers > this.players.length && this.status === RUNNING_STATUS) {
-            this.players.push(player);
-        }
+        this.currentTurn = new Turn();
     }
 
     add(joystick) {
@@ -94,11 +59,18 @@ class Game extends Jig {
         this.joystick.push(joystick);
     }
 
+    nextTurn() {
+        this.currentTurn = new Turn();
+    }
+
     endGame() {
         this.status = END_STATUS;
     }
 }
-Game.deps = { RUNNING_STATUS, END_STATUS, expect: Run.extra.expect, Player, Joystick }
+
+Game.deps = { RUNNING_STATUS, END_STATUS, expect: Run.extra.expect, Joystick, Turn }
+Game.metadata = { emoji: '👾' }
+
 const SERVER_OWNER = "mj1WZ8wTimESFzLgio12iG55M5dYR16PwR"
 class InvitationRequest extends Jig {
     sendInvitation() {
@@ -108,7 +80,7 @@ class InvitationRequest extends Jig {
 
     sendJoystick(game) {
         expect(game).toBeInstanceOf(Game);
-        const joystick = new Joystick();
+        const joystick = new Joystick(game);
         game.add(joystick);
         joystick.send(this.player);
         return joystick;
@@ -118,20 +90,20 @@ class InvitationRequest extends Jig {
 InvitationRequest.deps = { SERVER_OWNER, Joystick, Game, expect: Run.extra.expect }
 
 // setRunServer().then(() => console.log("Run setea3 a server"))
+const CLASES = [InvitationRequest, Joystick, Turn, Game];
 
 async function deployGameClasses(run) {
-    await run.deploy(Player);
-    await run.deploy(Joystick);
-    await run.deploy(Game);
-    await run.deploy(InvitationRequest);
+    await Promise.all(CLASES.map(c => {
+        run.deploy(c)
+        console.log(`Deploya3 clase: ${c.name}`)
+    }))
     await run.sync();
-    console.log("Classes deployed", Player, Joystick, Game, InvitationRequest);
-    
+
     return {
-        player: Player.location,
         game: Game.location,
         invitationRequest: InvitationRequest.location,
-        joystick: Joystick.location
+        joystick: Joystick.location,
+        turn: Turn.location,
     };
 }
 
@@ -179,16 +151,5 @@ class GameServer {
 
         const currentGame = await runInstance.load(this.gameLocation);
         return await currentGame.sync();
-    }
-
-    async acceptPlayer(rawTx) {
-        const runInstance = getRunInstanceServer();
-        const playerWantsToJoinTx = await runInstance.import(rawTx);
-
-        if (playerWantsToJoinTx.outputs.length) {
-            console.log("output: ", playerWantsToJoinTx.outputs);
-        }
-
-        return await playerWantsToJoinTx.publish({ pay: false });
     }
 }
