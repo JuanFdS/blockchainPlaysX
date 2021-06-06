@@ -1,0 +1,24 @@
+{
+  "name": "poc-run",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "elm-app start",
+    "test": "elm-app test",
+    "build": "elm-app build",
+    "format": "elm-format --yes tests/ src/",
+    "lint": "elm-format --validate tests/ src/"
+
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "create-elm-app": "^5.22.0",
+    "run-sdk": "^0.6.24"
+  },
+  "devDependencies": {
+    "jest": "^27.0.4"
+  }
+}
