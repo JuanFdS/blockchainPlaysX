@@ -22,7 +22,7 @@ type Model
 
 init : ( Model, Cmd Msg )
 init =
-    ( EsperandoGames, Cmd.none )
+    ( EsperandoGames, getGames () )
 
 
 
@@ -38,6 +38,7 @@ type Msg
     | ProfileGot Profile
     | UpdatedProfileToSearch Location
     | GoTo Model
+    | AskForGames
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -64,6 +65,9 @@ update msg model =
         ( GamesConseguidos _, Join game ) ->
             ( Jugando { game = game, selectedCharacter = Nothing }, Cmd.none )
 
+        ( _, AskForGames ) ->
+            ( EsperandoGames, getGames () )
+
         ( _, GoTo newModel ) ->
             ( newModel, Cmd.none )
 
@@ -76,18 +80,18 @@ viewWithHeaders page =
     div
         []
         [ div [ style "display" "flex" ]
-            [ tab "Profile" <| ProfileSearchPage ""
-            , tab "Games" <| GamesConseguidos []
+            [ tab "Search Profile" <| GoTo <| ProfileSearchPage ""
+            , tab "Search Games" <| AskForGames
             ]
         , page
         ]
 
 
-tab name newPage =
+tab name msg =
     div
         [ style "width" "100%"
         , class "tab"
-        , onClick <| GoTo <| newPage
+        , onClick msg
         ]
         [ text name ]
 
@@ -98,7 +102,7 @@ view model =
         case model of
             EsperandoGames ->
                 div []
-                    [ text "cargando" ]
+                    [ text "loading" ]
 
             GamesConseguidos games ->
                 div []
@@ -112,13 +116,15 @@ view model =
                 viewRunningGame game
 
             Profile profile ->
-                aHrefToBlockChain profile [ text profile.location ]
+                div [ style "margin-top" "1em" ]
+                    [ aHrefToBlockChain profile [ text profile.location ]
+                    ]
 
             WaitingProfile ->
-                div [] [ text "cargando" ]
+                div [] [ text "loading" ]
 
             ProfileSearchPage location ->
-                div []
+                div [ style "margin-top" "1em" ]
                     [ label [] [ text "See profile for address: " ]
                     , input [ onInput UpdatedProfileToSearch ] [ text location ]
                     , button [ onClick SearchProfile ] [ text "Search" ]

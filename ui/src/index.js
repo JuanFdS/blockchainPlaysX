@@ -10,6 +10,17 @@ const elm = Elm.Main.init({
 async function startBlockchain() {
   await loadTo3();
 
+  elm.ports.searchProfile.subscribe(async (addressLocation) => {
+    let run = await getRun(addressLocation);
+    elm.ports.profileFound.send( { location: run.owner.address });
+  });
+
+  elm.ports.getGames.subscribe(sendGames)
+
+  sendGames()
+}
+
+async function sendGames() {
   const games = await decimeLosGames();
 
   const serializeCharacter = (pawn) => {
@@ -29,10 +40,6 @@ async function startBlockchain() {
     characters: game.pawns.map(serializeCharacter)
   }))
 
-  elm.ports.searchProfile.subscribe(async (addressLocation) => {
-    let run = await getRun(addressLocation);
-    elm.ports.profileFound.send( { location: run.owner.owner });
-  });
   elm.ports.updatedGames.send(gamesAMandar);
 }
 

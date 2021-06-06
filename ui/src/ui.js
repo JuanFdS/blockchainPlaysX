@@ -2,6 +2,7 @@
 export function getRun() {
     let run = new Run(JSON.parse(localStorage.getItem('runConfig')));
     run.trust('*')
+    window.run = run
     return run
 }
 
@@ -12,7 +13,7 @@ let servidor = {
 const run = servidor.run
 const JOYSTICK_ADDRESS = "31aa49bf375959d9385b631a4935bc9044dece869e6d2e070fa75bee9ddade6d_o3"
 const TURN_ADDRESS = "31aa49bf375959d9385b631a4935bc9044dece869e6d2e070fa75bee9ddade6d_o4"
-const GAME_ADDRESS = "df19d0b395f705d752de7b8ca75103fdc6e7680e15b70356803996c4ba2a9401_o1"
+const GAME_ADDRESS = "faad7cbdca3d7f373087b42c6b9468ebe7164004daa6b9f5d276b5509567db0e_o1"
 const INVITATION_REQUEST_ADDRESS = "31aa49bf375959d9385b631a4935bc9044dece869e6d2e070fa75bee9ddade6d_o1"
 
 export async function loadTo3() {

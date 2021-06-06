@@ -44,6 +44,9 @@ port asd : Location -> Cmd msg
 port searchProfile : Location -> Cmd msg
 
 
+port getGames : () -> Cmd msg
+
+
 port profileFound : (Profile -> msg) -> Sub msg
 
 
