@@ -51,3 +51,9 @@ port profileFound : (Profile -> msg) -> Sub msg
 
 
 port updatedGames : (List Game -> msg) -> Sub msg
+
+
+port runInstanceWasSet : (Location -> msg) -> Sub msg
+
+
+port setRunInstance : Location -> Cmd msg

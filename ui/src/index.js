@@ -12,10 +12,17 @@ async function startBlockchain() {
 
   elm.ports.searchProfile.subscribe(async (addressLocation) => {
     let run = await getRun(addressLocation);
-    elm.ports.profileFound.send( { location: run.owner.address });
+    elm.ports.profileFound.send( { location: run.owner.address || run.owner.owner });
   });
 
   elm.ports.getGames.subscribe(sendGames)
+
+  elm.ports.setRunInstance.subscribe(async (location) => {
+    console.log("wololo")
+    localStorage.setItem('runConfig', JSON.stringify({ network: 'test', owner: location }))
+    getRun()
+    elm.ports.runInstanceWasSet.send(location)
+  })
 
   sendGames()
 }

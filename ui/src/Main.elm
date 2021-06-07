@@ -18,11 +18,12 @@ type Model
     | WaitingProfile
     | Profile Profile
     | ProfileSearchPage Location
+    | Login Location
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( EsperandoGames, getGames () )
+    ( Login "", Cmd.none )
 
 
 
@@ -39,11 +40,23 @@ type Msg
     | UpdatedProfileToSearch Location
     | GoTo Model
     | AskForGames
+    | ChangeLoginAddress Location
+    | LoggedIn
+    | RunInstanceSet
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case ( model, msg ) of
+        ( _, RunInstanceSet ) ->
+            ( EsperandoGames, getGames () )
+
+        ( Login _, ChangeLoginAddress newLocation ) ->
+            ( Login newLocation, Cmd.none )
+
+        ( Login location, LoggedIn ) ->
+            ( EsperandoGames, setRunInstance location )
+
         ( ProfileSearchPage location, UpdatedProfileToSearch newLocation ) ->
             ( ProfileSearchPage newLocation, Cmd.none )
 
@@ -96,39 +109,55 @@ tab name msg =
         [ text name ]
 
 
+viewLogin address =
+    div [ style "margin-top" "3em" ]
+        [ label [] [ text "Enter your address" ]
+        , input [ onInput ChangeLoginAddress ] [ text address ]
+        , button [ onClick LoggedIn ] [ text "Login" ]
+        ]
+
+
 view : Model -> Html Msg
 view model =
-    viewWithHeaders <|
-        case model of
-            EsperandoGames ->
-                div []
-                    [ text "loading" ]
+    case model of
+        Login address ->
+            viewLogin address
 
-            GamesConseguidos games ->
-                div []
-                    [ h1 [] [ text "Games" ]
-                    , button [ onClick <| GoTo <| ProfileSearchPage "" ] [ text "Search profile" ]
-                    , ul [] <|
-                        List.map viewGame games
-                    ]
+        otherModel ->
+            viewWithHeaders <|
+                case otherModel of
+                    EsperandoGames ->
+                        div []
+                            [ text "loading" ]
 
-            Jugando game ->
-                viewRunningGame game
+                    GamesConseguidos games ->
+                        div []
+                            [ h1 [] [ text "Games" ]
+                            , button [ onClick <| GoTo <| ProfileSearchPage "" ] [ text "Search profile" ]
+                            , ul [] <|
+                                List.map viewGame games
+                            ]
 
-            Profile profile ->
-                div [ style "margin-top" "1em" ]
-                    [ aHrefToBlockChain profile [ text profile.location ]
-                    ]
+                    Jugando game ->
+                        viewRunningGame game
 
-            WaitingProfile ->
-                div [] [ text "loading" ]
+                    Profile profile ->
+                        div [ style "margin-top" "1em" ]
+                            [ aHrefToBlockChain profile [ text profile.location ]
+                            ]
 
-            ProfileSearchPage location ->
-                div [ style "margin-top" "1em" ]
-                    [ label [] [ text "See profile for address: " ]
-                    , input [ onInput UpdatedProfileToSearch ] [ text location ]
-                    , button [ onClick SearchProfile ] [ text "Search" ]
-                    ]
+                    WaitingProfile ->
+                        div [] [ text "loading" ]
+
+                    ProfileSearchPage location ->
+                        div [ style "margin-top" "1em" ]
+                            [ label [] [ text "See profile for address: " ]
+                            , input [ onInput UpdatedProfileToSearch ] [ text location ]
+                            , button [ onClick SearchProfile ] [ text "Search" ]
+                            ]
+
+                    Login address ->
+                        viewLogin address
 
 
 viewGame game =
@@ -264,13 +293,9 @@ main =
         , update = update
         , subscriptions =
             \model ->
-                case model of
-                    EsperandoGames ->
-                        updatedGames GamesUpdated
-
-                    WaitingProfile ->
-                        profileFound ProfileGot
-
-                    _ ->
-                        Sub.none
+                Sub.batch
+                    [ updatedGames GamesUpdated
+                    , profileFound ProfileGot
+                    , runInstanceWasSet (\_ -> RunInstanceSet)
+                    ]
         }

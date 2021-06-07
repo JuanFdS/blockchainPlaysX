@@ -1,9 +1,22 @@
 
 export function getRun() {
-    let run = new Run(JSON.parse(localStorage.getItem('runConfig')));
-    run.trust('*')
-    window.run = run
-    return run
+    if(localStorage.getItem('runConfig')) {
+        let run = null
+        try {
+            run = new Run(JSON.parse(localStorage.getItem('runConfig')));
+        } catch (e) {
+            localStorage.removeItem('runConfig')
+            throw e
+        }
+        run.trust('*')
+        window.run = run
+        return run
+    } else {
+        let run = new Run({ network: 'test' })
+        run.trust('*')
+        window.run = run
+        return run
+    }
 }
 
 let servidor = {
