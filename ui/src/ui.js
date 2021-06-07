@@ -42,6 +42,7 @@ export async function joinGame(game) {
     await game.sync();
     const invitation = new InvitationRequest(run.owner.address, game);
     await invitation.sync();
+    console.log("Invitation creada para", game.gameName);
     return invitation;
 }
 

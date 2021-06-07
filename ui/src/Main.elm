@@ -49,7 +49,7 @@ type Msg
     | LoggedIn
     | RunInstanceSet
     | JoinedGame Location Game
-    | GameUpdated Location Game
+    | GameUpdated Game
     | DeployHero Int
 
 
@@ -86,11 +86,10 @@ update msg model =
         ( Jugando runningGame, DeployHero column ) ->
             ( model, deployHero { joystick = runningGame.joystickLocation, column = column } )
 
-        ( Jugando runningGame, GameUpdated joystickLocation game ) ->
+        ( Jugando runningGame, GameUpdated game ) ->
             ( Jugando
                 { runningGame
-                    | joystickLocation = joystickLocation
-                    , game = game
+                    | game = game
                 }
             , Cmd.none
             )
@@ -382,6 +381,6 @@ main =
                     , runInstanceWasSet (\_ -> RunInstanceSet)
                     , autocompleteRunInstance ChangeLoginAddress
                     , gameStarted (\coso -> JoinedGame coso.joystick coso.game)
-                    , gameUpdated (\coso -> GameUpdated coso.joystick coso.game)
+                    , gameUpdated (\coso -> GameUpdated coso.game)
                     ]
         }

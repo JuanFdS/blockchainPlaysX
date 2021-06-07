@@ -39,7 +39,7 @@ type alias Location =
 port joinGame : Location -> Cmd msg
 
 
-port gameUpdated : ({ joystick : Location, game : Game } -> msg) -> Sub msg
+port gameUpdated : ({ game : Game } -> msg) -> Sub msg
 
 
 port gameStarted : ({ joystick : Location, game : Game } -> msg) -> Sub msg
