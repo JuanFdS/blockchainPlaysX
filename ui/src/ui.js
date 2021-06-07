@@ -1,9 +1,10 @@
 
 export function getRun() {
-    if(localStorage.getItem('runConfig')) {
+    const runConfig = localStorage.getItem('runConfig') ;
+    if(runConfig) {
         let run = null
         try {
-            run = new Run(JSON.parse(localStorage.getItem('runConfig')));
+            run = new Run(JSON.parse(runConfig));
         } catch (e) {
             localStorage.removeItem('runConfig')
             throw e
@@ -23,8 +24,9 @@ let servidor = {
     run: getRun()
 }
 
+const codeRepoLocation =
+  localStorage.getItem("repoLocation") || "a7d798ca9433d11056da79f3d95effba6819e6173c152c6e76898c8b2a867166_o1";
 const run = servidor.run
-const codeRepoLocation = "a7d798ca9433d11056da79f3d95effba6819e6173c152c6e76898c8b2a867166_o1";
 
 export async function loadTo3() {
     const CodeRepo = await run.load(codeRepoLocation);
@@ -97,19 +99,19 @@ export async function decimeLosGames() {
 }
 
 export async function setupMonitorGame(game, reactToChange, reactToGameFinished) {
-    let lastTurn = game.currentTurn
-    const interval = setInterval(async () => {
+    setTimeout(async () => {
+        let lastTurn = game.currentTurn
         console.log("chequeando cambios");
-        game.sync()
+        await game.sync()
         if (lastTurn !== game.currentTurn) {
             console.log("game changed", game)
             await reactToChange(game)
-            lastTurn = game.currentTurn;
         }
         if (game.winner !== null) {
             console.log("game finished", game)
-            clearInterval(interval)
             reactToGameFinished(game)
+        } else {
+            setupMonitorGame(game, reactToChange, reactToGameFinished)
         }
     }, 2500)
 }
