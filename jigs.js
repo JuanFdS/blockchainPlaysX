@@ -115,10 +115,22 @@ class Game extends Jig {
         this.reset()
     }
 
+    static removeFinishedGames() {
+        this.all = this.all.filter(g => g.isFinished())
+    }
+
+    static removeAllGames() {
+        this.all = [];
+    }
+
     static createGame() {
         const newGame = new Game();
         this.all.push(newGame);
         return newGame;
+    }
+
+    isFinished() {
+        return this.status !== RUNNING_STATUS;
     }
 
     reset() {
@@ -209,15 +221,15 @@ Game.all = [];
 Game.metadata = {emoji: '👾'}
 
 class InvitationRequest extends Jig {
-    sendInvitation() {
-        this.player = this.owner;
+    init(player, game) {
+        this.player = player;
         this.owner = SERVER_OWNER;
+        this.game = game;
     }
 
-    sendJoystick(game) {
-        expect(game).toBeInstanceOf(Game);
-        const joystick = new Joystick(game, game.getAndSwapNextTeam());
-        game.add(joystick);
+    sendJoystick() {
+        const joystick = new Joystick(this.game, this.game.getAndSwapNextTeam());
+        this.game.add(joystick);
         joystick.send(this.player);
         return joystick;
     }

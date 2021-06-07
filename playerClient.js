@@ -1,7 +1,7 @@
 const { getRunInstanceClient, getRunInstanceClient2 } = require("./main.js");
 const Run = require("run-sdk");
 
-let INVRQ_CLASS_LOCATION = "87950daf55a42ecfd3e24adbf2540bad9436700392eaa0b65f2d9c40d6e14d5a_o1"
+let INVRQ_CLASS_LOCATION = "bf191f23d53b95f2efe332fa62aff064a7ae72399d19ca46a546bb2b1ff3f29e_o1"
 let JOYSTICK_CLASS_LOCATION = "87950daf55a42ecfd3e24adbf2540bad9436700392eaa0b65f2d9c40d6e14d5a_o3"
 
 class PlayerClient {
@@ -31,12 +31,11 @@ class PlayerClient {
     //     return await joinTx.export();
     // }
 
-    async sendInvitation() {
+    async sendInvitation(game) {
         const InvitationRequest = await this.runInstance.load(INVRQ_CLASS_LOCATION);
-        const invitation = new InvitationRequest();
+        const invitation = new InvitationRequest(this.runInstance.owner.address, game);
         await invitation.sync();
-        invitation.sendInvitation();
-        await invitation.sync();
+        return invitation.location
     }
 
     async deployCharacter(xPosition) {
@@ -46,6 +45,11 @@ class PlayerClient {
         await joystick.sync();
         joystick.deployHero(xPosition);
         await joystick.sync();
+    }
+
+    async destroyInstances() {
+        await this.runInstance.inventory.sync();
+        await Promise.all(this.runInstance.inventory.jigs.map(j => j.destroy()));
     }
 
     async destroyAll() {

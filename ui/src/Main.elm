@@ -33,7 +33,7 @@ type Msg
     = NoOp
     | GamesUpdated (List Game)
     | SeleccionarCelda Celda
-    | Join Game
+    | RequestToJoin Game
     | SearchProfile
     | ProfileGot Profile
     | GoTo Model
@@ -70,8 +70,8 @@ update msg model =
         ( Jugando runningGame, SeleccionarCelda celda ) ->
             ( Jugando { runningGame | selectedCharacter = characterIn celda }, Cmd.none )
 
-        ( GamesConseguidos _, Join game ) ->
-            ( Jugando { game = game, selectedCharacter = Nothing }, Cmd.none )
+        ( GamesConseguidos _, RequestToJoin game ) ->
+            ( model, joinGame game.location )
 
         ( _, AskForGames ) ->
             ( EsperandoGames, getGames () )
@@ -190,7 +190,7 @@ viewHeroes heroes =
 
 viewGame game =
     li []
-        [ button [ onClick (Join game) ] [ text "Join" ]
+        [ button [ onClick (RequestToJoin game) ] [ text "Join" ]
         , aHrefToBlockChain game [ text game.name ]
         ]
 

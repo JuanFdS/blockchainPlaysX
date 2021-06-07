@@ -9,18 +9,19 @@ async function deployGameClasses(run) {
         console.log(`Deploya3 clase: ${c.name}`)
     }))
     await run.sync();
-
-    return {
-        game: Game.location,
-        invitationRequest: InvitationRequest.location,
-        joystick: Joystick.location,
-        turn: Turn.location,
-    };
 }
 
 class GameServer {
     constructor() {
         this.runInstance = getRunInstanceServer();
+    }
+
+    async loadClasses() {
+        this.classesLocations = {}
+        await this.runInstance.inventory.sync();
+        this.runInstance.inventory.code.forEach(c => {
+            this.classesLocations[c.name] = c;
+        })
     }
 
     async resetearYEmpezarDeNuevo() {
@@ -30,11 +31,13 @@ class GameServer {
     }
 
     async deployClasses() {
-        this.classesLocations = await deployGameClasses(this.runInstance);
+        await deployGameClasses(this.runInstance);
+        await this.loadClasses();
     }
 
     async beginGame() {
-        const Game = await this.runInstance.load(this.classesLocations.game);
+        const Game = this.classesLocations.Game;
+        await Game.sync()
         const pepitaGame = Game.createGame();
         pepitaGame.begin("pepita", 1);
         await pepitaGame.sync();
@@ -43,13 +46,19 @@ class GameServer {
 
     async approveInvitations() {
         await this.runInstance.inventory.sync();
-        const I = await this.runInstance.load(this.classesLocations.invitationRequest);
+        const I = this.classesLocations.InvitationRequest;
         const game = await this.currentGame();
         const joysticks = await Promise.all(
             this.runInstance.inventory.jigs.filter(jig => jig instanceof I).map(i => i.sendJoystick(game))
         );
         await game.sync();
         await Promise.all(joysticks.map(j => j.sync()));
+    }
+
+    async destroyInstances() {
+        await this.runInstance.inventory.sync();
+        this.classesLocations.Game.removeAllGames();
+        await Promise.all(this.runInstance.inventory.jigs.map(j => j.destroy()));
     }
 
     async destroyAll() {

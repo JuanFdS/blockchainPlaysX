@@ -24,19 +24,24 @@ let servidor = {
 }
 
 const run = servidor.run
-const JOYSTICK_ADDRESS = "31aa49bf375959d9385b631a4935bc9044dece869e6d2e070fa75bee9ddade6d_o3"
-const TURN_ADDRESS = "31aa49bf375959d9385b631a4935bc9044dece869e6d2e070fa75bee9ddade6d_o4"
-const GAME_ADDRESS = "faad7cbdca3d7f373087b42c6b9468ebe7164004daa6b9f5d276b5509567db0e_o1"
-const INVITATION_REQUEST_ADDRESS = "31aa49bf375959d9385b631a4935bc9044dece869e6d2e070fa75bee9ddade6d_o1"
+const GAME_ADDRESS = "f669a93455916e6d46a3bd8493ad5b282b6cbec1bc640e745dda7bd1cd3c138b_o1"
+const INVITATION_REQUEST_ADDRESS = "bf191f23d53b95f2efe332fa62aff064a7ae72399d19ca46a546bb2b1ff3f29e_o1"
 const HERO_ADDRESS = "b3dc18f5c1b8ed92482d360aaa100303cd0b126ba405cba461b4dd0af0b58497_o1"
 
 export async function loadTo3() {
-    window.Joystick = await run.load(JOYSTICK_ADDRESS)
-    window.Turn = await run.load(TURN_ADDRESS)
     window.Game = await run.load(GAME_ADDRESS)
     window.Hero = await run.load(HERO_ADDRESS)
     window.InvitationRequest = await run.load(INVITATION_REQUEST_ADDRESS)
     return run.inventory.sync()
+}
+
+
+export async function joinGame(game) {
+    await InvitationRequest.sync();
+    await game.sync();
+    const invitation = new InvitationRequest(run.owner.address,game);
+    await invitation.sync();
+    return invitation;
 }
 
 export async function decimeLosGames() {
