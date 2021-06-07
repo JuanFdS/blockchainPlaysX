@@ -1,12 +1,12 @@
 const { getRunInstanceClient, getRunInstanceClient2 } = require("./main.js");
 const Run = require("run-sdk");
 
-let INVRQ_CLASS_LOCATION = "bf191f23d53b95f2efe332fa62aff064a7ae72399d19ca46a546bb2b1ff3f29e_o1"
-let JOYSTICK_CLASS_LOCATION = "87950daf55a42ecfd3e24adbf2540bad9436700392eaa0b65f2d9c40d6e14d5a_o3"
+let codeRepoLocation = '5820414bfb5c139c7583716c907fcb3f400b382e7f65b1caeeeb2102bad3ef81_o1';
 
 class PlayerClient {
     constructor(runInstance) {
         this.runInstance = runInstance;
+        this.classesLocations = null;
     }
     //
     // async createPlayer(gameOwner) {
@@ -30,9 +30,17 @@ class PlayerClient {
     //
     //     return await joinTx.export();
     // }
+    async getClassFor(className) {
+        if (this.classesLocations === null) {
+            const CodeRepo = await this.runInstance.load(codeRepoLocation);
+            await CodeRepo.sync();
+            this.classesLocations = CodeRepo.locations;
+        }
+        return await this.runInstance.load(this.classesLocations[className]);
+    }
 
     async sendInvitation(game) {
-        const InvitationRequest = await this.runInstance.load(INVRQ_CLASS_LOCATION);
+        const InvitationRequest = await this.getClassFor("InvitationRequest");
         const invitation = new InvitationRequest(this.runInstance.owner.address, game);
         await invitation.sync();
         return invitation.location
@@ -40,7 +48,7 @@ class PlayerClient {
 
     async deployCharacter(xPosition) {
         await this.runInstance.inventory.sync();
-        const J = await this.runInstance.load(JOYSTICK_CLASS_LOCATION);
+        const J = await this.getClassFor("Joystick");
         const joystick = this.runInstance.inventory.jigs.filter(j => j instanceof J)[0];
         await joystick.sync();
         joystick.deployHero(xPosition);

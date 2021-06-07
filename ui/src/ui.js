@@ -24,14 +24,15 @@ let servidor = {
 }
 
 const run = servidor.run
-const GAME_ADDRESS = "f669a93455916e6d46a3bd8493ad5b282b6cbec1bc640e745dda7bd1cd3c138b_o1"
-const INVITATION_REQUEST_ADDRESS = "bf191f23d53b95f2efe332fa62aff064a7ae72399d19ca46a546bb2b1ff3f29e_o1"
-const HERO_ADDRESS = "b3dc18f5c1b8ed92482d360aaa100303cd0b126ba405cba461b4dd0af0b58497_o1"
+const codeRepoLocation = "5820414bfb5c139c7583716c907fcb3f400b382e7f65b1caeeeb2102bad3ef81_o1";
 
 export async function loadTo3() {
-    window.Game = await run.load(GAME_ADDRESS)
-    window.Hero = await run.load(HERO_ADDRESS)
-    window.InvitationRequest = await run.load(INVITATION_REQUEST_ADDRESS)
+    const CodeRepo = await run.load(codeRepoLocation);
+    await CodeRepo.sync();
+
+    window.Game = await run.load(CodeRepo.locations["Game"])
+    window.Hero = await run.load(CodeRepo.locations["Hero"])
+    window.InvitationRequest = await run.load(CodeRepo.locations["InvitationRequest"])
     return run.inventory.sync()
 }
 
