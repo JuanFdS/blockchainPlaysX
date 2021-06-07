@@ -9,7 +9,7 @@ const LEFT = 'LEFT';
 const RIGHT = 'RIGHT';
 const MAP_LENGTH = 20;
 const MAP_WIDTH = 8;
-const SERVER_OWNER = "mj1WZ8wTimESFzLgio12iG55M5dYR16PwR"
+const SERVER_OWNER = "mkfcabkTXk7ovyt1ggnuajoAAvyPFhM2Ss"
 
 class Pawn extends Jig {
     init(health, direction, column, hero) {
@@ -37,6 +37,10 @@ class Pawn extends Jig {
         } else {
             this.health = this.health - 10;
         }
+    }
+
+    won() {
+        return (this.goingUp() && this.position.y === 0) || (!this.goingUp() && this.position.y === MAP_LENGTH);
     }
 
     isNearTo(opponent) {
@@ -175,7 +179,7 @@ class Game extends Jig {
         }
         this.joysticks.forEach(j => {
             j.commands.filter(command => command.turn === this.currentTurn).forEach(command => {
-                this.pawns.push(new Pawn(health, j.team, command.column, command.hero));
+                this.pawns.push(new Pawn(100, j.team, command.column, command.hero));
             });
         });
 
@@ -225,13 +229,17 @@ class InvitationRequest extends Jig {
         this.player = player;
         this.owner = SERVER_OWNER;
         this.game = game;
+        this.used = false;
     }
 
     sendJoystick() {
-        const joystick = new Joystick(this.game, this.game.getAndSwapNextTeam());
-        this.game.add(joystick);
-        joystick.send(this.player);
-        return joystick;
+        if (!this.used) {
+            const joystick = new Joystick(this.game, this.game.getAndSwapNextTeam());
+            this.game.add(joystick);
+            joystick.send(this.player);
+            this.used = true;
+            return joystick;
+        }
     }
 }
 
