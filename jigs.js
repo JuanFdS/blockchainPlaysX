@@ -9,7 +9,7 @@ const LEFT = 'LEFT';
 const RIGHT = 'RIGHT';
 const MAP_LENGTH = 20;
 const MAP_WIDTH = 8;
-const SERVER_OWNER = "mkfcabkTXk7ovyt1ggnuajoAAvyPFhM2Ss"
+const SERVER_OWNER = "mxmizVcodj4j2xwVLgTu1pDoCiGuDJky5y"
 
 class Pawn extends Jig {
     init(health, direction, column, hero) {
