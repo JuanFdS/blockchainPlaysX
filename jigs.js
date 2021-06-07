@@ -12,10 +12,10 @@ const MAP_WIDTH = 8;
 const SERVER_OWNER = "mj1WZ8wTimESFzLgio12iG55M5dYR16PwR"
 
 class Pawn extends Jig {
-    init(health, direction, column, hero) {
+    init(direction, column, hero) {
         this.direction = direction
         this.position = {x: column, y: this.goingUp() ? MAP_LENGTH : 0}
-        this.health = health
+        this.health = hero.health
         this.originalHero = hero
     }
 
@@ -27,20 +27,27 @@ class Pawn extends Jig {
         return this.direction === "UP"
     }
 
-    tick(engagedOnBattle) {
-        if (!engagedOnBattle.includes(this)) {
+    tick(attacksOnSelf) {
+        let notAttacked = !(attacksOnSelf.length === 0);
+        if (notAttacked) {
             if (this.goingUp()) {
                 this.position.y = this.position.y - 1;
             } else {
                 this.position.y = this.position.y + 1;
             }
         } else {
-            this.health = this.health - 10;
+            attacksOnSelf.forEach(damage => {
+                this.health = this.health - damage;
+            })
         }
     }
 
     isNearTo(opponent) {
         return this.position.x === opponent.position.x && this._abs(this.position.y - opponent.position.y) <= 1;
+    }
+
+    getAttack() {
+        return this.originalHero.offensivePower()
     }
 
     _abs(x) {
@@ -53,8 +60,9 @@ Pawn.metadata = {emoji: '️♟️'}
 Pawn.deps = {expect: Run.extra.expect, MAP_LENGTH}
 
 class Prize extends Jig {
-    init() {
-        Prize.auth()
+    init(experience) {
+        expect(experience).toBeNumber();
+        this.experience = experience
         this.usado = false
     }
 
@@ -63,21 +71,32 @@ class Prize extends Jig {
     }
 }
 
-Prize.deps = {}
+Prize.deps = { expect: Run.extra.expect }
 Prize.metadata = { emoji: '🏆' }
 
 class Hero extends Jig {
-    init(name) {
+    init(name, stats) {
         this.name = name
         this.experience = 0
+        this.strength = stats.strength
+        this.speed = stats.speed
+        this.health = stats.health
     }
 
     consumePrize(prize) {
         expect(prize).toBeInstanceOf(Prize)
         if (! prize.usado) {
-            prize.consumirse();
+            prize.consumePrize();
             this.experience = this.experience + prize.experience
         }
+    }
+
+    level() {
+        return parseInt(this.experience / 100)
+    }
+
+    offensivePower() {
+        return this.strength + (level / 3)
     }
 }
 
@@ -175,20 +194,22 @@ class Game extends Jig {
         }
         this.joysticks.forEach(j => {
             j.commands.filter(command => command.turn === this.currentTurn).forEach(command => {
-                this.pawns.push(new Pawn(health, j.team, command.column, command.hero));
+                this.pawns.push(new Pawn(j.team, command.column, command.hero));
             });
         });
 
         const goingUp = this.pawns.filter(p => p.goingUp());
         const goingDown = this.pawns.filter(p => !p.goingUp());
-        let engagedOnBattle = [];
+        let attacksOn = {};
         goingUp.forEach(pUp => {
             const enemiesNear = goingDown.filter(pDw => pUp.isNearTo(pDw));
-            if (enemiesNear.length > 0) {
-                engagedOnBattle = [...engagedOnBattle, ...enemiesNear, pUp]
-            }
+            attacksOn[pUp] = enemiesNear.map(x => x.getAttack());
         })
-        this.pawns.forEach(p => p.tick(engagedOnBattle));
+        goingDown.forEach(pDw => {
+            const enemiesNear = goingUp.filter(pUp => pDw.isNearTo(pUp));
+            attacksOn[pDw] = enemiesNear.map(x => x.getAttack());
+        })
+        this.pawns.forEach(p => p.tick(attacksOn[p]));
         this.pawns = this.pawns.filter(p => p.health > 0);
 
         const champions = this.pawns.filter(p => p.won())
