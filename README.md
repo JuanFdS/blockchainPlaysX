@@ -70,7 +70,9 @@ Then, you can run a game's tick so every character moves forward and battles foe
 
 For managing the server's owner actions you can load the gameServer.js script into a nodejs repl and run the following commands:
  
+
   - `gs.deployClasses()` deploys the Game classes. The provided run owner already has those classes so there is no need to deploy them.
+  - `gs.loadCLasses()` fetches the updated version of the game classes.
   - `gs.beginGame()` starts a new game with no players connected yet.
   - `gs.approveInvitations()` this syncs the inventory and searches for new not already approved `InvitationRequest`s and accept them sending the joystick to the player.
   - `gs.tickGame()` moves the game forward one frame (the pawns move forward or fight with their opponents opposite to them).
