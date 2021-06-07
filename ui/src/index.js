@@ -1,7 +1,7 @@
 import './main.css';
 import {Elm} from './Main.elm';
 import * as serviceWorker from './serviceWorker';
-import {decimeLosGames, getRun, loadTo3} from "./ui";
+import {decimeLosGames, getRun, joinGame, loadTo3} from "./ui";
 
 const elm = Elm.Main.init({
   node: document.getElementById('root')
@@ -24,6 +24,20 @@ async function startBlockchain() {
   })
 
   elm.ports.autocompleteRunInstance.send(run.owner.owner || run.owner.address || "")
+
+  elm.ports.joinGame.subscribe(async (gameLocation) => {
+    const game = await run.load(gameLocation);
+    const invitation = await joinGame(game);
+    setInterval(async () => {
+      await game.sync()
+      const misJoysticks = game.joysticks.filter(j => j.owner === run.owner.address);
+      console.log("misJoysticks: ", misJoysticks);
+      if (misJoysticks.length > 0) {
+        const joystick = misJoysticks[0];
+        elm.ports.gameStarted.send(joystick, game);
+      }
+    }, 10000)
+  })
 
   sendGames()
 }
@@ -48,8 +62,17 @@ async function sendGames() {
     characters: game.pawns.map(serializeCharacter)
   }))
 
+  console.log(games);
+  console.log(gamesAMandar);
+
+  elm.ports.searchProfile.subscribe(async (addressLocation) => {
+    let run = await getRun(addressLocation);
+    console.log({ location: run.owner.owner })
+    elm.ports.profileFound.send( { location: run.owner.owner });
+  });
   elm.ports.updatedGames.send(gamesAMandar);
 }
+
 
 startBlockchain()
 

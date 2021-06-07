@@ -30,15 +30,20 @@ type alias RunningGame =
     }
 
 
+type alias Joystick =
+    { location : Location
+    , gameLocation : Location
+    }
+
+
 type alias Location =
     String
 
 
+port joinGame : Location -> Cmd msg
 
---port sendMessage : String -> Cmd msg
 
-
-port asd : Location -> Cmd msg
+port gameStarted : ({ joystick : Joystick, game : Game } -> msg) -> Sub msg
 
 
 port searchProfile : () -> Cmd msg
