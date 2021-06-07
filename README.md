@@ -60,11 +60,22 @@ Also, the pawns players place in the game are instances of Heroes they own and t
 
 You'll need to setup the game server, which owns both the classes and some jigs that handle the game, including a jig that represents the game itself.
 
-As a player, you need to login using your private key and when you do that you can either see your heroes or request an invite to a battle.
+###As a Player
+You need to login using your private key and when you do that you can either see your heroes or request an invite to a battle.
 When the server starts, you will see a grid and you will be able to click in a track to add your pawn there.
 
-As the server's owner, you can start a game, accepting the requests from players, which will grant them a "Joystick".
+###As the Server's Owner
+You can start a game, accepting the requests from players, which will grant them a "Joystick".
 Then, you can run a game's tick so every character moves forward and battles foes.
+
+For managing the server's owner actions you can load the gameServer.js script into a nodejs repl and run the following commands:
+ 
+  - `gs.deployClasses()` deploys the Game classes. The provided run owner already has those classes so there is no need to deploy them.
+  - `gs.beginGame()` starts a new game with no players connected yet.
+  - `gs.approveInvitations()` this syncs the inventory and searches for new not already approved `InvitationRequest`s and accept them sending the joystick to the player.
+  - `gs.tickGame()` moves the game forward one frame (the pawns move forward or fight with their opponents opposite to them).
+
+  - `gs.destroyAll()` destroys all the code and jigs associated with the game owner, except for the CodeRepo which is a class containing the locations of all other classes (useful to only have a location hardcoded on the client and also there is no need to change it when the other classes are destroyed and recreated because the locations inside are updated).
 
 When one character gets to the other side, that team wins and the game ends.
 
