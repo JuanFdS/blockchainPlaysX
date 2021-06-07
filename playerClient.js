@@ -1,7 +1,7 @@
 const { getRunInstanceClient, getRunInstanceClient2 } = require("./main.js");
 const Run = require("run-sdk");
 
-let codeRepoLocation = '5820414bfb5c139c7583716c907fcb3f400b382e7f65b1caeeeb2102bad3ef81_o1';
+let codeRepoLocation = 'a7d798ca9433d11056da79f3d95effba6819e6173c152c6e76898c8b2a867166_o1';
 
 class PlayerClient {
     constructor(runInstance) {

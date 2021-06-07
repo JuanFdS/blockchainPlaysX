@@ -1,7 +1,16 @@
 import './main.css';
 import {Elm} from './Main.elm';
 import * as serviceWorker from './serviceWorker';
-import {decimeLosGames, getRun, joinGame, getHeroes, loadTo3} from "./ui";
+import {
+  decimeLosGames,
+  getRun,
+  joinGame,
+  getHeroes,
+  loadTo3,
+  serializeGame,
+  waitForJoystickOnGame,
+  searchJoystickForGame, setupMonitorGame
+} from "./ui";
 
 const elm = Elm.Main.init({
   node: document.getElementById('root')
@@ -20,28 +29,54 @@ async function startBlockchain() {
     elm.ports.profileFound.send(profile);
   });
 
+  elm.ports.monitorGame.subscribe(async (gameLocation) => {
+      console.log('monitorear:', gameLocation);
+      const game = await run.load(gameLocation);
+      await setupMonitorGame(game,
+        async (g) => {
+          console.log("cambio", g)
+          elm.ports.gameUpdated.send({game: serializeGame(g)})
+        },
+        (g) => console.log("termino", g));
+  });
+
+  elm.ports.deployHero.subscribe(async ({joystick: joystickLocation, column}) => {
+      const joystick = await run.load(joystickLocation);
+      await joystick.sync();
+      console.log('deployanding')
+      joystick.deployHero('cosa', column);
+      await joystick.sync();
+  })
+
   elm.ports.getGames.subscribe(sendGames)
 
   elm.ports.setRunInstance.subscribe(async (location) => {
-    localStorage.setItem('runConfig', JSON.stringify({ network: 'test', owner: location }))
+    localStorage.setItem('runConfig', JSON.stringify({
+      network: 'test',
+      owner: location,
+      purse: location,
+    }))
     getRun()
     elm.ports.runInstanceWasSet.send(location)
   })
 
-  elm.ports.autocompleteRunInstance.send(run.owner.owner || run.owner.address || "")
+  elm.ports.autocompleteRunInstance.send(run.owner.privkey || run.owner.owner || run.owner.address || "")
 
   elm.ports.joinGame.subscribe(async (gameLocation) => {
     const game = await run.load(gameLocation);
-    const invitation = await joinGame(game);
-    setInterval(async () => {
-      await game.sync()
-      const misJoysticks = game.joysticks.filter(j => j.owner === run.owner.address);
-      console.log("misJoysticks: ", misJoysticks);
-      if (misJoysticks.length > 0) {
-        const joystick = misJoysticks[0];
-        elm.ports.gameStarted.send(joystick, game);
-      }
-    }, 10000)
+    const joystick = await searchJoystickForGame(game);
+    if (joystick) {
+      let payload = {joystick: joystick.location, game: serializeGame(game)};
+      elm.ports.gameStarted.send(payload);
+      return;
+    }
+
+    await joinGame(game);
+    waitForJoystickOnGame(game, (joystick) => {
+      let payload = {joystick: joystick.location, game: serializeGame(game)};
+      console.log(payload);
+      elm.ports.gameStarted.send(payload);
+    })
   })
 
   sendGames()
@@ -50,22 +85,7 @@ async function startBlockchain() {
 async function sendGames() {
   const games = await decimeLosGames();
 
-  const serializeCharacter = (pawn) => {
-    return ({
-      position: {
-        x: pawn.position.x,
-        y: pawn.position.y
-      },
-      health: pawn.health,
-      location: pawn.location
-    })
-  }
-
-  const gamesAMandar = games.map((game) => ({
-    name: game.gameName,
-    location: game.location,
-    characters: game.pawns.map(serializeCharacter)
-  }))
+  const gamesAMandar = games.map(serializeGame)
 
   console.log(games);
   console.log(gamesAMandar);

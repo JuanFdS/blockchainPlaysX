@@ -56,7 +56,7 @@ class GameServer {
         const Game = this.classesLocations.Game;
         await Game.sync()
         const pepitaGame = Game.createGame();
-        pepitaGame.begin("pepita", 1);
+        pepitaGame.begin(`pepita ${new Date().toString()}`, 1);
         await pepitaGame.sync();
         this.gameLocation = pepitaGame.location;
     }
@@ -65,11 +65,18 @@ class GameServer {
         await this.runInstance.inventory.sync();
         const I = this.classesLocations.InvitationRequest;
         const game = await this.currentGame();
-        const joysticks = await Promise.all(
-            this.runInstance.inventory.jigs.filter(jig => jig instanceof I).map(i => i.sendJoystick(game))
-        );
         await game.sync();
-        await Promise.all(joysticks.map(j => j.sync()));
+
+        for(const i of this.runInstance.inventory.jigs.filter(jig => jig instanceof I)) {
+            await i.sync();
+            if(!i.used) {
+                const j = i.sendJoystick();
+                await j.sync();
+                await i.sync();
+                await game.sync();
+            }
+
+        }
     }
 
     async destroyInstances() {
