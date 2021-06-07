@@ -9,6 +9,7 @@ type alias Character =
     { position : Position
     , health : Int
     , location : Location
+    , direction : String
     }
 
 
@@ -31,13 +32,6 @@ type alias Game =
     }
 
 
-type alias RunningGame =
-    { game : Game
-    , joystickLocation : Location
-    , selectedCharacter : Maybe Character
-    }
-
-
 type alias Location =
     String
 
@@ -45,7 +39,16 @@ type alias Location =
 port joinGame : Location -> Cmd msg
 
 
+port gameUpdated : ({ joystick : Location, game : Game } -> msg) -> Sub msg
+
+
 port gameStarted : ({ joystick : Location, game : Game } -> msg) -> Sub msg
+
+
+port monitorGame : Location -> Cmd msg
+
+
+port deployHero : { joystick : Location, column : Int } -> Cmd msg
 
 
 port searchProfile : () -> Cmd msg

@@ -9,7 +9,7 @@ import {
   loadTo3,
   serializeGame,
   waitForJoystickOnGame,
-  searchJoystickForGame
+  searchJoystickForGame, setupMonitorGame
 } from "./ui";
 
 const elm = Elm.Main.init({
@@ -28,6 +28,25 @@ async function startBlockchain() {
     console.log("Profile", profile)
     elm.ports.profileFound.send(profile);
   });
+
+  elm.ports.monitorGame.subscribe(async (gameLocation) => {
+      console.log('monitorear:', gameLocation);
+      const game = await run.load(gameLocation);
+      await setupMonitorGame(game,
+        async (g) => {
+          console.log("cambio", g)
+          elm.ports.gameUpdated.send({game: serializeGame(g)})
+        },
+        (g) => console.log("termino", g));
+  });
+
+  elm.ports.deployHero.subscribe(async ({joystick: joystickLocation, column}) => {
+      const joystick = await run.load(joystickLocation);
+      await joystick.sync();
+      console.log('deployanding')
+      joystick.deployHero('cosa', column);
+      await joystick.sync();
+  })
 
   elm.ports.getGames.subscribe(sendGames)
 

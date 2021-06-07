@@ -67,6 +67,7 @@ export const serializeCharacter = (pawn) => {
             x: pawn.position.x,
             y: pawn.position.y
         },
+        direction: pawn.direction,
         health: pawn.health,
         location: pawn.location
     })
@@ -92,6 +93,24 @@ export async function decimeLosGames() {
     await Game.sync();
     await Promise.all(Game.all.map(g => g.sync()));
     return Game.all
+}
+
+export async function setupMonitorGame(game, reactToChange, reactToGameFinished) {
+    let lastTurn = game.currentTurn
+    const interval = setInterval(async () => {
+        console.log("chequeando cambios");
+        game.sync()
+        if (lastTurn !== game.currentTurn) {
+            console.log("game changed", game)
+            await reactToChange(game)
+            lastTurn = game.currentTurn;
+        }
+        if (game.winner !== null) {
+            console.log("game finished", game)
+            clearInterval(interval)
+            reactToGameFinished(game)
+        }
+    }, 2500)
 }
 
 export async function getHeroes() {

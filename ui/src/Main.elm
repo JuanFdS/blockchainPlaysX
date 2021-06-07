@@ -20,6 +20,13 @@ type Model
     | Login Location
 
 
+type alias RunningGame =
+    { game : Game
+    , joystickLocation : Location
+    , selectedCelda : Maybe Celda
+    }
+
+
 init : ( Model, Cmd Msg )
 init =
     ( Login "", Cmd.none )
@@ -42,6 +49,8 @@ type Msg
     | LoggedIn
     | RunInstanceSet
     | JoinedGame Location Game
+    | GameUpdated Location Game
+    | DeployHero Int
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -63,16 +72,34 @@ update msg model =
             ( Profile profile, Cmd.none )
 
         ( _, JoinedGame joystickLocation game ) ->
-            ( Jugando { selectedCharacter = Nothing, joystickLocation = joystickLocation, game = game }, Cmd.none )
+            ( Jugando
+                { selectedCelda = Nothing
+                , joystickLocation = joystickLocation
+                , game = game
+                }
+            , monitorGame game.location
+            )
 
         ( _, NoOp ) ->
             ( model, Cmd.none )
+
+        ( Jugando runningGame, DeployHero column ) ->
+            ( model, deployHero { joystick = runningGame.joystickLocation, column = column } )
+
+        ( Jugando runningGame, GameUpdated joystickLocation game ) ->
+            ( Jugando
+                { runningGame
+                    | joystickLocation = joystickLocation
+                    , game = game
+                }
+            , Cmd.none
+            )
 
         ( EsperandoGames, GamesUpdated games ) ->
             ( GamesConseguidos games, Cmd.none )
 
         ( Jugando runningGame, SeleccionarCelda celda ) ->
-            ( Jugando { runningGame | selectedCharacter = characterIn celda }, Cmd.none )
+            ( Jugando { runningGame | selectedCelda = Just celda }, Cmd.none )
 
         ( GamesConseguidos _, RequestToJoin game ) ->
             ( model, joinGame game.location )
@@ -205,12 +232,17 @@ viewRunningGame runningGame =
         [ aHrefToBlockChain runningGame.game [ text runningGame.game.name ]
         , div [ style "display" "flex", style "flex-direction" "column", style "align-items" "center" ]
             [ tablero runningGame.game.characters
-            , case runningGame.selectedCharacter of
+            , case runningGame.selectedCelda of
                 Nothing ->
                     text ""
 
-                Just character ->
-                    viewCharacter character
+                Just celda ->
+                    case celda.contenido of
+                        Libre ->
+                            text ""
+
+                        Ocupada character ->
+                            viewCharacter character
             ]
         ]
 
@@ -229,8 +261,19 @@ viewCharacter character =
 
 tablero : List Character -> Html Msg
 tablero characters =
-    div [ style "display" "grid", style "grid-template-columns" "auto auto auto auto auto auto auto auto", style "width" "200px" ]
-        (List.range 1 20 |> List.indexedMap (\x _ -> List.range 1 8 |> List.indexedMap (\y _ -> celdaSegunSiHayPersonaje characters ( x, y ))) |> List.concat)
+    div [ style "display" "grid", style "grid-template-columns" "auto auto auto auto auto auto auto auto", style "width" "200px" ] <|
+        (List.range 0 20
+            |> List.map
+                (\x ->
+                    List.range 0 7
+                        |> List.map
+                            (\y ->
+                                celdaSegunSiHayPersonaje characters ( x, y )
+                            )
+                )
+            |> List.concat
+        )
+            ++ (List.range 0 7 |> List.map (\y -> button [ onClick <| DeployHero y ] [ text "^" ]))
 
 
 
@@ -245,13 +288,19 @@ celdaSegunSiHayPersonaje : List Character -> ( Int, Int ) -> Html Msg
 celdaSegunSiHayPersonaje posicionesPersonajes ( y, x ) =
     case find (\p -> p.position.x == x && p.position.y == y) posicionesPersonajes of
         Just character ->
-            viewCelda ( x, y ) <| Ocupada character
+            viewCelda ( x, y ) <| { position = character.position, contenido = Ocupada character }
 
         Nothing ->
-            viewCelda ( x, y ) Libre
+            viewCelda ( x, y ) <| { position = { x = x, y = y }, contenido = Libre }
 
 
-type Celda
+type alias Celda =
+    { position : Position
+    , contenido : ContenidoCelda
+    }
+
+
+type ContenidoCelda
     = Libre
     | Ocupada Character
 
@@ -273,11 +322,16 @@ viewCelda : ( Int, Int ) -> Celda -> Html Msg
 viewCelda ( x, y ) celda =
     div
         [ style "background"
-            (if ocupada celda then
-                "red"
+            (case celda.contenido of
+                Libre ->
+                    "aliceblue"
 
-             else
-                "aliceblue"
+                Ocupada caracter ->
+                    if caracter.direction == "UP" then
+                        "red"
+
+                    else
+                        "blue"
             )
         , style "border-width" "thin"
         , style "border-style" "groove"
@@ -287,7 +341,7 @@ viewCelda ( x, y ) celda =
         , onClick (SeleccionarCelda celda)
         ]
         [ text <|
-            (if celda == Libre then
+            (if celda.contenido == Libre then
                 ""
 
              else
@@ -328,5 +382,6 @@ main =
                     , runInstanceWasSet (\_ -> RunInstanceSet)
                     , autocompleteRunInstance ChangeLoginAddress
                     , gameStarted (\coso -> JoinedGame coso.joystick coso.game)
+                    , gameUpdated (\coso -> GameUpdated coso.joystick coso.game)
                     ]
         }
