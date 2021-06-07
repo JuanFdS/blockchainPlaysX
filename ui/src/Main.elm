@@ -323,7 +323,11 @@ viewCelda ( x, y ) celda =
         [ style "background"
             (case celda.contenido of
                 Libre ->
-                    "aliceblue"
+                    if modBy 2 x == 0 then
+                        "aliceblue"
+
+                    else
+                        "lightgreen"
 
                 Ocupada caracter ->
                     if caracter.direction == "UP" then
