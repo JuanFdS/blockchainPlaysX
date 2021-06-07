@@ -202,10 +202,7 @@ viewGame game =
 viewRunningGame : RunningGame -> Html Msg
 viewRunningGame runningGame =
     li []
-        [ a [ href <| linkToBlockchain runningGame.game.location ]
-            [ text runningGame.game.name
-            ]
-        , button [] [ text "//TODO: Unirse" ]
+        [ aHrefToBlockChain runningGame.game [ text runningGame.game.name ]
         , div [ style "display" "flex", style "flex-direction" "column", style "align-items" "center" ]
             [ tablero runningGame.game.characters
             , case runningGame.selectedCharacter of
