@@ -1,7 +1,16 @@
 import './main.css';
 import {Elm} from './Main.elm';
 import * as serviceWorker from './serviceWorker';
-import {decimeLosGames, getRun, joinGame, getHeroes, loadTo3, serializeGame, waitForJoystickOnGame} from "./ui";
+import {
+  decimeLosGames,
+  getRun,
+  joinGame,
+  getHeroes,
+  loadTo3,
+  serializeGame,
+  waitForJoystickOnGame,
+  searchJoystickForGame
+} from "./ui";
 
 const elm = Elm.Main.init({
   node: document.getElementById('root')
@@ -36,6 +45,13 @@ async function startBlockchain() {
 
   elm.ports.joinGame.subscribe(async (gameLocation) => {
     const game = await run.load(gameLocation);
+    const joystick = await searchJoystickForGame(game);
+    if (joystick) {
+      let payload = {joystick: joystick.location, game: serializeGame(game)};
+      elm.ports.gameStarted.send(payload);
+      return;
+    }
+
     await joinGame(game);
     waitForJoystickOnGame(game, (joystick) => {
       let payload = {joystick: joystick.location, game: serializeGame(game)};
