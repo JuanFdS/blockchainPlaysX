@@ -41,7 +41,7 @@ type alias Location =
 port asd : Location -> Cmd msg
 
 
-port searchProfile : Location -> Cmd msg
+port searchProfile : () -> Cmd msg
 
 
 port getGames : () -> Cmd msg
@@ -57,3 +57,6 @@ port runInstanceWasSet : (Location -> msg) -> Sub msg
 
 
 port setRunInstance : Location -> Cmd msg
+
+
+port autocompleteRunInstance : (Location -> msg) -> Sub msg

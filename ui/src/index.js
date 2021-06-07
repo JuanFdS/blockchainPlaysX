@@ -18,11 +18,12 @@ async function startBlockchain() {
   elm.ports.getGames.subscribe(sendGames)
 
   elm.ports.setRunInstance.subscribe(async (location) => {
-    console.log("wololo")
     localStorage.setItem('runConfig', JSON.stringify({ network: 'test', owner: location }))
     getRun()
     elm.ports.runInstanceWasSet.send(location)
   })
+
+  elm.ports.autocompleteRunInstance.send(run.owner.owner || run.owner.address || "")
 
   sendGames()
 }

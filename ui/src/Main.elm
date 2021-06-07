@@ -17,7 +17,6 @@ type Model
     | Jugando RunningGame
     | WaitingProfile
     | Profile Profile
-    | ProfileSearchPage Location
     | Login Location
 
 
@@ -37,7 +36,6 @@ type Msg
     | Join Game
     | SearchProfile
     | ProfileGot Profile
-    | UpdatedProfileToSearch Location
     | GoTo Model
     | AskForGames
     | ChangeLoginAddress Location
@@ -48,20 +46,17 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case ( model, msg ) of
+        ( _, ChangeLoginAddress newLocation ) ->
+            ( Login newLocation, Cmd.none )
+
         ( _, RunInstanceSet ) ->
             ( EsperandoGames, getGames () )
 
-        ( Login _, ChangeLoginAddress newLocation ) ->
-            ( Login newLocation, Cmd.none )
+        ( _, SearchProfile ) ->
+            ( WaitingProfile, searchProfile () )
 
         ( Login location, LoggedIn ) ->
             ( EsperandoGames, setRunInstance location )
-
-        ( ProfileSearchPage location, UpdatedProfileToSearch newLocation ) ->
-            ( ProfileSearchPage newLocation, Cmd.none )
-
-        ( ProfileSearchPage location, SearchProfile ) ->
-            ( WaitingProfile, searchProfile location )
 
         ( WaitingProfile, ProfileGot profile ) ->
             ( Profile profile, Cmd.none )
@@ -93,7 +88,7 @@ viewWithHeaders page =
     div
         []
         [ div [ style "display" "flex" ]
-            [ tab "Search Profile" <| GoTo <| ProfileSearchPage ""
+            [ tab "Search Profile" <| SearchProfile
             , tab "Search Games" <| AskForGames
             ]
         , page
@@ -112,7 +107,7 @@ tab name msg =
 viewLogin address =
     div [ style "margin-top" "3em" ]
         [ label [] [ text "Enter your address" ]
-        , input [ onInput ChangeLoginAddress ] [ text address ]
+        , input [ onInput ChangeLoginAddress, value address ] []
         , button [ onClick LoggedIn ] [ text "Login" ]
         ]
 
@@ -133,7 +128,6 @@ view model =
                     GamesConseguidos games ->
                         div []
                             [ h1 [] [ text "Games" ]
-                            , button [ onClick <| GoTo <| ProfileSearchPage "" ] [ text "Search profile" ]
                             , ul [] <|
                                 List.map viewGame games
                             ]
@@ -148,13 +142,6 @@ view model =
 
                     WaitingProfile ->
                         div [] [ text "loading" ]
-
-                    ProfileSearchPage location ->
-                        div [ style "margin-top" "1em" ]
-                            [ label [] [ text "See profile for address: " ]
-                            , input [ onInput UpdatedProfileToSearch ] [ text location ]
-                            , button [ onClick SearchProfile ] [ text "Search" ]
-                            ]
 
                     Login address ->
                         viewLogin address
@@ -297,5 +284,6 @@ main =
                     [ updatedGames GamesUpdated
                     , profileFound ProfileGot
                     , runInstanceWasSet (\_ -> RunInstanceSet)
+                    , autocompleteRunInstance ChangeLoginAddress
                     ]
         }
