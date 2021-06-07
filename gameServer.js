@@ -1,7 +1,7 @@
 const { getRunInstanceServer } = require("./main.js");
 const { CodeRepo, InvitationRequest, Joystick, Turn, Game, Pawn, Hero, Prize} = require("./jigs.js");
 
-let codeRepoLocation = 'c2107dabfb8b9fa24df6a1bd2a5a0a7d68176522740ace43b878235a60692203_o1';
+let codeRepoLocation = '4d7417796d72bffc3c128e85eddea6e44bdf90a36913c3aa622007cb4d623e43_o1';
 const CLASES = [InvitationRequest, Joystick, Turn, Game, Pawn, Hero, Prize];
 
 async function deployGameClasses(run, codeRepo) {
