@@ -41,6 +41,7 @@ type Msg
     | ChangeLoginAddress Location
     | LoggedIn
     | RunInstanceSet
+    | JoinedGame Location Game
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -60,6 +61,9 @@ update msg model =
 
         ( WaitingProfile, ProfileGot profile ) ->
             ( Profile profile, Cmd.none )
+
+        ( _, JoinedGame joystickLocation game ) ->
+            ( Jugando { selectedCharacter = Nothing, joystickLocation = joystickLocation, game = game }, Cmd.none )
 
         ( _, NoOp ) ->
             ( model, Cmd.none )
@@ -326,5 +330,6 @@ main =
                     , profileFound ProfileGot
                     , runInstanceWasSet (\_ -> RunInstanceSet)
                     , autocompleteRunInstance ChangeLoginAddress
+                    , gameStarted (\coso -> JoinedGame coso.joystick coso.game)
                     ]
         }

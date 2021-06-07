@@ -40,9 +40,52 @@ export async function loadTo3() {
 export async function joinGame(game) {
     await InvitationRequest.sync();
     await game.sync();
-    const invitation = new InvitationRequest(run.owner.address,game);
+    const invitation = new InvitationRequest(run.owner.address, game);
     await invitation.sync();
     return invitation;
+}
+
+export async function waitForJoystickOnGame(game, f) {
+    const j = await searchJoystickForGame(game);
+    if (j) {
+        f(j)
+    } else {
+        const i = setInterval(async () => {
+            const j = await searchJoystickForGame(game);
+            if (j) {
+                f(j)
+                clearInterval(i);
+            }
+        }, 5000)
+    }
+
+}
+
+export const serializeCharacter = (pawn) => {
+    return ({
+        position: {
+            x: pawn.position.x,
+            y: pawn.position.y
+        },
+        health: pawn.health,
+        location: pawn.location
+    })
+}
+
+export const serializeGame = (game) => ({
+    name: game.gameName,
+    location: game.location,
+    characters: game.pawns.map(serializeCharacter)
+});
+
+export async function searchJoystickForGame(game) {
+    await game.sync();
+    const misJoysticks = game.joysticks.filter(j => j.owner === run.owner.address);
+    if (misJoysticks.length > 0) {
+        return misJoysticks[0];
+    } else {
+        return null
+    }
 }
 
 export async function decimeLosGames() {

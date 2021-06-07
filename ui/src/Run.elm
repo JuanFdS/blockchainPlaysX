@@ -33,13 +33,8 @@ type alias Game =
 
 type alias RunningGame =
     { game : Game
+    , joystickLocation : Location
     , selectedCharacter : Maybe Character
-    }
-
-
-type alias Joystick =
-    { location : Location
-    , gameLocation : Location
     }
 
 
@@ -50,7 +45,7 @@ type alias Location =
 port joinGame : Location -> Cmd msg
 
 
-port gameStarted : ({ joystick : Joystick, game : Game } -> msg) -> Sub msg
+port gameStarted : ({ joystick : Location, game : Game } -> msg) -> Sub msg
 
 
 port searchProfile : () -> Cmd msg
