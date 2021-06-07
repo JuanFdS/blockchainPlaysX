@@ -1,14 +1,21 @@
 const { getRunInstanceServer } = require("./main.js");
-const { InvitationRequest, Joystick, Turn, Game, Pawn, Hero, Prize} = require("./jigs.js");
+const { CodeRepo, InvitationRequest, Joystick, Turn, Game, Pawn, Hero, Prize} = require("./jigs.js");
 
+let codeRepoLocation = '5820414bfb5c139c7583716c907fcb3f400b382e7f65b1caeeeb2102bad3ef81_o1';
 const CLASES = [InvitationRequest, Joystick, Turn, Game, Pawn, Hero, Prize];
 
-async function deployGameClasses(run) {
-    await Promise.all(CLASES.map(c => {
-        run.deploy(c)
+async function deployGameClasses(run, codeRepo) {
+    const deployedClasses = await Promise.all(CLASES.map(c => {
+        const promise = run.deploy(c)
         console.log(`Deploya3 clase: ${c.name}`)
+        return promise;
     }))
     await run.sync();
+    const classesLocations = {};
+    deployedClasses.forEach(c => { classesLocations[c.name] = c.location; });
+    codeRepo.mergeLocations(classesLocations);
+    await codeRepo.sync();
+    return codeRepo.locations;
 }
 
 class GameServer {
@@ -31,7 +38,17 @@ class GameServer {
     }
 
     async deployClasses() {
-        await deployGameClasses(this.runInstance);
+        let CodeRepoDeployed;
+        if (codeRepoLocation === null) {
+            CodeRepoDeployed = await this.runInstance.deploy(CodeRepo);
+            await this.runInstance.sync();
+            codeRepoLocation = CodeRepoDeployed.location;
+        } else {
+            CodeRepoDeployed = await this.runInstance.load(codeRepoLocation);
+            await CodeRepoDeployed.sync();
+            await this.runInstance.sync();
+        }
+        await deployGameClasses(this.runInstance, CodeRepoDeployed);
         await this.loadClasses();
     }
 
@@ -64,7 +81,7 @@ class GameServer {
     async destroyAll() {
         await this.runInstance.inventory.sync();
         await Promise.all(this.runInstance.inventory.jigs.map(j => j.destroy()));
-        await Promise.all(this.runInstance.inventory.code.map(j => j.destroy()));
+        await Promise.all(this.runInstance.inventory.code.filter(c => c.name !== 'CodeRepo').map(j => j.destroy()));
     }
 
     async currentGame() {

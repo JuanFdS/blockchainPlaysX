@@ -239,6 +239,14 @@ InvitationRequest.metadata = {emoji: '📨'}
 
 InvitationRequest.deps = {SERVER_OWNER, Joystick, Game, expect: Run.extra.expect}
 
+class CodeRepo extends Jig {
+    static mergeLocations(newLocations) {
+        this.locations = {...this.locations, ...newLocations};
+    }
+}
+
+CodeRepo.locations = {}
+
 module.exports = {
-    Prize, Hero, Pawn, InvitationRequest, Joystick, Turn, Game
+    CodeRepo, Prize, Hero, Pawn, InvitationRequest, Joystick, Turn, Game
 }
