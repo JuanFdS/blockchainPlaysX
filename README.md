@@ -25,3 +25,6 @@ As the server's owner, you can start a game, accepting the requests from players
 Then, you can run a game's tick so every character moves forward and battles foes.
 
 When one character gets to the other side, that team wins and the game ends.
+
+## Unfinished / To do
+
