@@ -138,6 +138,7 @@ view model =
                     Profile profile ->
                         div [ style "margin-top" "1em" ]
                             [ aHrefToBlockChain profile [ text profile.location ]
+                            , viewHeroes profile.heroes
                             ]
 
                     WaitingProfile ->
@@ -145,6 +146,46 @@ view model =
 
                     Login address ->
                         viewLogin address
+
+
+heroCard : Hero -> Html Msg
+heroCard hero =
+    div [ class "card" ]
+        [ div [ class "card-image" ]
+            []
+        , div [ class "card-text" ]
+            [ h2 []
+                [ text hero.name ]
+            , p []
+                [ aHrefToBlockChain hero [ text "Open in blockchain explorer" ] ]
+            ]
+        , div [ class "card-stats" ]
+            [ div [ class "stat" ]
+                [ div [ class "value" ]
+                    [ text "4"
+                    ]
+                , div [ class "type" ]
+                    [ text "Strength" ]
+                ]
+            , div [ class "stat border" ]
+                [ div [ class "value" ]
+                    [ text "5123" ]
+                , div [ class "type" ]
+                    [ text "Speed" ]
+                ]
+            , div [ class "stat" ]
+                [ div [ class "value" ]
+                    [ text "32" ]
+                , div [ class "type" ]
+                    [ text "Intellect" ]
+                ]
+            ]
+        ]
+
+
+viewHeroes : List Hero -> Html Msg
+viewHeroes heroes =
+    div [ style "display" "flex" ] (List.map heroCard heroes)
 
 
 viewGame game =

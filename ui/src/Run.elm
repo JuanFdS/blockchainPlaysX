@@ -14,6 +14,13 @@ type alias Character =
 
 type alias Profile =
     { location : Location
+    , heroes : List Hero
+    }
+
+
+type alias Hero =
+    { name : String
+    , location : Location
     }
 
 
