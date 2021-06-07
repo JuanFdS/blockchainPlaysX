@@ -35,7 +35,6 @@ export async function loadTo3() {
     window.Game = await run.load(CodeRepo.locations["Game"])
     window.Hero = await run.load(CodeRepo.locations["Hero"])
     window.InvitationRequest = await run.load(CodeRepo.locations["InvitationRequest"])
-    return run.inventory.sync()
 }
 
 

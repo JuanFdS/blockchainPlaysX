@@ -118,7 +118,7 @@ viewWithHeaders page =
     div
         []
         [ div [ style "display" "flex" ]
-            [ tab "Search Profile" <| SearchProfile
+            [ tab "View Profile" <| SearchProfile
             , tab "Search Games" <| AskForGames
             ]
         , page
