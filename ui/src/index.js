@@ -35,7 +35,9 @@ async function startBlockchain() {
       await setupMonitorGame(game,
         async (g) => {
           console.log("cambio", g)
-          elm.ports.gameUpdated.send({game: serializeGame(g)})
+          let payload = {game: serializeGame(g)};
+          console.log("cambio payload", payload)
+          elm.ports.gameUpdated.send(payload)
         },
         (g) => console.log("termino", g));
   });
